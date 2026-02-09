@@ -77,12 +77,18 @@ const VerifyForm: React.FC<VerifyFormProps> = ({ onVerified }) => {
       const data: VerifyResponse = await response.json();
 
       if (data.success && (data.taskId || (data as any).task_id)) {
+        const taskId = data.taskId || (data as any).task_id;
+        
+        console.log('✅ 验证成功，taskId:', taskId);  // 第1个日志
         setIsSuccess(true);
+        
         setTimeout(() => {
-          onVerified((data.taskId || (data as any).task_id)!, {
+          console.log('⏰ setTimeout 执行，准备调用 onVerified');  // 第2个日志
+          onVerified(taskId, {
             orderSn,
             mobileTail,
           });
+          console.log('📞 onVerified 已调用');  // 第3个日志
         }, 800);
       } else {
         setError(data.message || '验证失败，请检查订单信息');
