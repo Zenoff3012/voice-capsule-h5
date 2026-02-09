@@ -76,11 +76,10 @@ const VerifyForm: React.FC<VerifyFormProps> = ({ onVerified }) => {
 
       const data: VerifyResponse = await response.json();
 
-      if (data.success && data.taskId) {
+      if (data.success && (data.taskId || (data as any).task_id)) {
         setIsSuccess(true);
-        // 延迟一下显示成功状态，然后进入下一步
         setTimeout(() => {
-          onVerified(data.taskId!, {
+          onVerified((data.taskId || (data as any).task_id)!, {
             orderSn,
             mobileTail,
           });
