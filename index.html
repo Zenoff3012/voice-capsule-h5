@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- PWA配置 -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#f97316" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="亲声胶囊" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <!-- SEO -->
+    <title>亲声胶囊 - 用声音传递心意</title>
+    <meta name="description" content="录制专属声音礼物，用声音传递你的心意。春节特别版，为TA制作一份独特的声音胶囊。" />
+    <meta name="keywords" content="声音礼物,录音,春节礼物,声音胶囊,亲声胶囊" />
+    
+    <!-- 微信分享 -->
+    <meta property="og:title" content="亲声胶囊 - 用声音传递心意" />
+    <meta property="og:description" content="有人为你制作了一份声音礼物，快来听听吧！" />
+    <meta property="og:image" content="/icons/icon-512x512.png" />
+    <meta property="og:type" content="website" />
+    
+    <!-- 禁止缓存（开发阶段） -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <style>
+      /* 加载动画 */
+      .loading-screen {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, #fff7ed 0%, #fff 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.3s ease;
+      }
+      .loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .loading-logo {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: loading-pulse 1.5s ease-in-out infinite;
+      }
+      .loading-logo span {
+        color: white;
+        font-size: 32px;
+        font-weight: bold;
+      }
+      .loading-text {
+        margin-top: 20px;
+        color: #666;
+        font-size: 14px;
+      }
+      @keyframes loading-pulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 8px 30px rgba(249, 115, 22, 0.5);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 加载画面 -->
+    <div class="loading-screen" id="loading-screen">
+      <div class="loading-logo">
+        <span>亲</span>
+      </div>
+      <p class="loading-text">正在加载...</p>
+    </div>
+    
+    <div id="root"></div>
+    
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <script>
+      // 隐藏加载画面
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const loadingScreen = document.getElementById('loading-screen');
+          if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+              loadingScreen.remove();
+            }, 300);
+          }
+        }, 500);
+      });
+      
+      // 微信浏览器提示
+      const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+      if (isWechat && !window.location.protocol.includes('https')) {
+        console.warn('微信浏览器需要使用HTTPS才能录音');
+      }
+    </script>
+    
+    <!-- 腾讯云COS SDK（可选，如果需要更高级的功能） -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/cos-js-sdk-v5/dist/cos-js-sdk-v5.min.js"></script> -->
+  </body>
+</html>
