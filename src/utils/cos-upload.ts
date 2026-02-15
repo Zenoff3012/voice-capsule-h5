@@ -115,20 +115,23 @@ export async function uploadViaBackend(
 ): Promise<UploadResult> {
   try {
     const formData = new FormData();
-    formData.append('audio', blob, `segment_${segmentIndex}.webm`);  // 字段名是 audio
-    formData.append('task_id', taskId);        // ✅ 下划线！不是 taskId
-    formData.append('segment_index', segmentIndex.toString());  // ✅ 下划线！不是 segmentIndex
+    formData.append('audio', blob, `segment_${segmentIndex}.webm`);
+    formData.append('task_id', taskId);        // 确认是下划线
+    formData.append('segment_index', segmentIndex.toString());
 
-    // 打印调试
-    console.log('上传参数:', { taskId, segmentIndex });
+    // ✅ 加在这里：打印 FormData
+    console.log('=== 上传调试信息 ===');
+    console.log('taskId:', taskId);
+    console.log('segmentIndex:', segmentIndex);
+    console.log('FormData entries:');
     for (let [key, value] of formData.entries()) {
-      console.log('FormData:', key, value);
+      console.log(`  ${key}:`, value);
     }
+    console.log('===================');
 
     const response = await fetch(`${API_BASE_URL}/api/upload/audio`, {
       method: 'POST',
       body: formData,
-      // 不要加 Content-Type header，浏览器会自动设置
     });
 
     if (!response.ok) {
