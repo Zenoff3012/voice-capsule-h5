@@ -77,6 +77,50 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     draw();
   }, [state.isRecording, state.volume]);
 
+  // 自动停止：60秒倒计时结束
+useEffect(() => {
+  if (state.isRecording && state.recordingTime >= SEGMENT_DURATION) {
+    console.log('⏰ 60秒到，自动停止录音');
+    handleAutoStop();
+  }
+}, [state.isRecording, state.recordingTime]);
+
+// 自动停止处理（区分于手动停止）
+const handleAutoStop = useCallback(async () => {
+  // ✅ 在这里添加（函数第一行）
+  console.log('🔴 handleAutoStop 执行', '当前段:', currentSegment, '录制时间:', state.recordingTime, '是否录制中:', state.isRecording);
+  
+  if (!state.isRecording) {
+    console.log('❌ 未在录制中，直接返回');
+    return;
+  }
+  
+  const blob = await stopRecording();
+  console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据'); // 这里也可以加
+  
+  if (blob) {
+    const url = URL.createObjectURL(blob);
+
+    
+    // 更新段状态为已录制
+    setSegments(prev => {
+      const newSegments = [...prev];
+      newSegments[currentSegment] = {
+        ...newSegments[currentSegment],
+        status: 'recorded',
+        blob,
+        url,
+      };
+      return newSegments;
+    });
+
+    // 自动上传
+    uploadSegment(blob, currentSegment);
+  }
+}, [state.isRecording, stopRecording, currentSegment]);
+
+
+  
   // 开始按住录音
   const handleTouchStart = useCallback(() => {
     if (segments[currentSegment].status !== 'pending' && segments[currentSegment].status !== 'error') {
@@ -99,40 +143,49 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     }, HOLD_DELAY);
   }, [currentSegment, segments, startRecording]);
 
-  // 结束录音
-  const handleTouchEnd = useCallback(async () => {
-    // 如果还在按住延迟中，取消录音
-    if (isHoldStarting) {
-      if (holdTimerRef.current) {
-        clearTimeout(holdTimerRef.current);
-      }
-      setIsHoldStarting(false);
-      return;
+  // 结束录音（手动）
+const handleTouchEnd = useCallback(async () => {
+  // ✅ 在这里添加（函数第一行）
+  console.log('🔵 handleTouchEnd 执行', 'isHoldStarting:', isHoldStarting, '录制时间:', state.recordingTime, '是否录制中:', state.isRecording);
+  
+  // 如果还在按住延迟中，取消录音
+  if (isHoldStarting) {
+    console.log('⏹️ 按住延迟中，取消录音');
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
     }
+    setIsHoldStarting(false);
+    return;
+  }
 
-    if (!state.isRecording) return;
+  // 如果已经在自动停止处理中，不要重复执行
+  if (!state.isRecording || state.recordingTime >= SEGMENT_DURATION) {
+    console.log('⏭️ 跳过手动停止，由自动停止处理或已超时');
+    return;
+  }
 
-    const blob = await stopRecording();
+  const blob = await stopRecording();
+  console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据'); // 这里也可以加
+  
+  if (blob) {
+    const url = URL.createObjectURL(blob);
     
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      
-      // 更新段状态为已录制
-      setSegments(prev => {
-        const newSegments = [...prev];
-        newSegments[currentSegment] = {
-          ...newSegments[currentSegment],
-          status: 'recorded',
-          blob,
-          url,
-        };
-        return newSegments;
-      });
+    // 更新段状态为已录制
+    setSegments(prev => {
+      const newSegments = [...prev];
+      newSegments[currentSegment] = {
+        ...newSegments[currentSegment],
+        status: 'recorded',
+        blob,
+        url,
+      };
+      return newSegments;
+    });
 
-      // 自动上传
-      uploadSegment(blob, currentSegment);
-    }
-  }, [isHoldStarting, state.isRecording, stopRecording, currentSegment]);
+    // 自动上传
+    uploadSegment(blob, currentSegment);
+  }
+}, [isHoldStarting, state.isRecording, state.recordingTime, stopRecording, currentSegment]);
 
   // 上传音频段
   const uploadSegment = async (blob: Blob, segmentIndex: number) => {
