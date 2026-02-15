@@ -8,11 +8,12 @@ type AppView = 'verify' | 'record' | 'complete';
 
 interface Segment {
   id: number;
-  status: 'pending' | 'recording' | 'recorded' | 'uploading' | 'uploaded' | 'error';
+  status: 'pending' | 'recording' | 'processing' | 'recorded' | 'uploading' | 'uploaded' | 'error';  // 加上 processing
   blob: Blob | null;
   url: string | null;
   uploadUrl: string | null;
   retryCount: number;
+  errorMsg?: string;  // 加上这个
 }
 
 function App() {
