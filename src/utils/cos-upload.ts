@@ -116,8 +116,9 @@ export async function uploadViaBackend(
   try {
     const formData = new FormData();
     formData.append('audio', blob, `segment_${segmentIndex}.webm`);
-    formData.append('taskId', taskId);
-    formData.append('segmentIndex', segmentIndex.toString());
+    // 改为下划线
+    formData.append('task_id', taskId);        // ✅ 下划线
+    formData.append('segment_index', segmentIndex.toString());  // ✅ 下划线
 
     const response = await fetch(`${API_BASE_URL}/api/upload/audio`, {
       method: 'POST',
