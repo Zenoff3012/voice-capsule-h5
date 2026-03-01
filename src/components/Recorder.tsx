@@ -87,40 +87,15 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
   }, [state.isRecording, state.recordingTime]);
 
   // 自动停止处理（区分于手动停止）
-const handleAutoStop = useCallback(async () => {
-  console.log('🔴 handleAutoStop 执行', '当前段:', currentSegment, '录制时间:', state.recordingTime, '是否录制中:', state.isRecording);
-  
-  if (!state.isRecording) {
-    console.log('❌ 未在录制中，直接返回');
-    return;
-  }
-  
-  // 立即更新为 processing 状态
-  setSegments(prev => {
-    const newSegments = [...prev];
-    newSegments[currentSegment] = { 
-      ...newSegments[currentSegment], 
-      status: 'processing' 
-    };
-    return newSegments;
-  });
-  
-  const blob = await stopRecording();
-  
-  // ✅ 在这里添加 Blob 详情打印（紧接着 stopRecording）
-  console.log('📊 Blob 详情:', {
-    size: blob?.size,
-    type: blob?.type,
-    sizeInMB: blob ? (blob.size / 1024 / 1024).toFixed(2) + ' MB' : 'N/A',
-    hasData: blob && blob.size > 0
-  });
-  
-  // 后面现有的代码保持不变...
-  if (blob) {
-    const url = URL.createObjectURL(blob);
-    // ... 后续代码
-  }
-}, [state.isRecording, stopRecording, currentSegment]);
+  const handleAutoStop = useCallback(async () => {
+    console.log('🔴 handleAutoStop 执行', '当前段:', currentSegment, '录制时间:', state.recordingTime, '是否录制中:', state.isRecording);
+    
+    
+
+    if (!state.isRecording) {
+      console.log('❌ 未在录制中，直接返回');
+      return;
+    }
     
     // 立即更新为 processing 状态，给用户反馈
     setSegments(prev => {
@@ -133,7 +108,19 @@ const handleAutoStop = useCallback(async () => {
     });
     
     const blob = await stopRecording();
-    console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
+console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
+
+// ✅ 添加这 7 行：打印 Blob 详情
+if (blob) {
+  console.log('📊 Blob 详情:', {
+    size: blob.size,
+    type: blob.type,
+    sizeInMB: (blob.size / 1024 / 1024).toFixed(2) + ' MB',
+    hasData: blob.size > 0
+  });
+} else {
+  console.log('📊 Blob 为 null');
+}
     
     if (blob) {
       const url = URL.createObjectURL(blob);
@@ -219,7 +206,19 @@ const handleAutoStop = useCallback(async () => {
     });
 
     const blob = await stopRecording();
-    console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
+console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
+
+// ✅ 添加这 7 行
+if (blob) {
+  console.log('📊 Blob 详情:', {
+    size: blob.size,
+    type: blob.type,
+    sizeInMB: (blob.size / 1024 / 1024).toFixed(2) + ' MB',
+    hasData: blob.size > 0
+  });
+} else {
+  console.log('📊 Blob 为 null');
+}
     
     if (blob) {
       const url = URL.createObjectURL(blob);
