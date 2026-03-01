@@ -110,16 +110,33 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     const blob = await stopRecording();
 console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
 
-// ✅ 添加这 7 行：打印 Blob 详情
+// ✅ 添加：强制修正 MIME 类型（解决 wav/webm 混乱）
+let correctedBlob = blob;
 if (blob) {
+  // Edge/Chrome 录的是 webm，但可能错误标记为 wav
+  const isActuallyWebm = blob.size > 1000; // 有数据就是 webm
+  if (blob.type === 'audio/wav' || blob.type === '') {
+    correctedBlob = new Blob([blob], { type: 'audio/webm' });
+    console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
+  } else {
+    correctedBlob = blob;
+  }
+  
   console.log('📊 Blob 详情:', {
-    size: blob.size,
-    type: blob.type,
-    sizeInMB: (blob.size / 1024 / 1024).toFixed(2) + ' MB',
-    hasData: blob.size > 0
+    originalType: blob?.type,
+    correctedType: correctedBlob?.type,
+    size: correctedBlob?.size,
+    sizeInMB: correctedBlob ? (correctedBlob.size / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'
   });
 } else {
   console.log('📊 Blob 为 null');
+}
+
+// 后续使用 correctedBlob 而不是 blob
+if (correctedBlob) {
+  const url = URL.createObjectURL(correctedBlob);
+  // ... 后续代码
+  uploadSegment(correctedBlob, currentSegment); // ✅ 传 correctedBlob
 }
     
     if (blob) {
@@ -208,16 +225,33 @@ if (blob) {
     const blob = await stopRecording();
 console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
 
-// ✅ 添加这 7 行
+// ✅ 添加：强制修正 MIME 类型（解决 wav/webm 混乱）
+let correctedBlob = blob;
 if (blob) {
+  // Edge/Chrome 录的是 webm，但可能错误标记为 wav
+  const isActuallyWebm = blob.size > 1000; // 有数据就是 webm
+  if (blob.type === 'audio/wav' || blob.type === '') {
+    correctedBlob = new Blob([blob], { type: 'audio/webm' });
+    console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
+  } else {
+    correctedBlob = blob;
+  }
+  
   console.log('📊 Blob 详情:', {
-    size: blob.size,
-    type: blob.type,
-    sizeInMB: (blob.size / 1024 / 1024).toFixed(2) + ' MB',
-    hasData: blob.size > 0
+    originalType: blob?.type,
+    correctedType: correctedBlob?.type,
+    size: correctedBlob?.size,
+    sizeInMB: correctedBlob ? (correctedBlob.size / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'
   });
 } else {
   console.log('📊 Blob 为 null');
+}
+
+// 后续使用 correctedBlob 而不是 blob
+if (correctedBlob) {
+  const url = URL.createObjectURL(correctedBlob);
+  // ... 后续代码
+  uploadSegment(correctedBlob, currentSegment); // ✅ 传 correctedBlob
 }
     
     if (blob) {
