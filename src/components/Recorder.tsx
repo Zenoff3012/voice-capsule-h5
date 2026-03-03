@@ -88,16 +88,14 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
 
   // 自动停止处理（区分于手动停止）
   const handleAutoStop = useCallback(async () => {
-    console.log('🔴 handleAutoStop 执行', '当前段:', currentSegment, '录制时间:', state.recordingTime, '是否录制中:', state.isRecording);
+    console.log('🔴 handleAutoStop 执行', '当前段:', currentSegment);
     
-    
-
     if (!state.isRecording) {
       console.log('❌ 未在录制中，直接返回');
       return;
     }
     
-    // 立即更新为 processing 状态，给用户反馈
+    // 立即更新为 processing 状态
     setSegments(prev => {
       const newSegments = [...prev];
       newSegments[currentSegment] = { 
@@ -108,56 +106,25 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     });
     
     const blob = await stopRecording();
-console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
-
-// ✅ 添加：强制修正 MIME 类型（解决 wav/webm 混乱）
-let correctedBlob = blob;
-if (blob) {
-  // Edge/Chrome 录的是 webm，但可能错误标记为 wav
-  const isActuallyWebm = blob.size > 1000; // 有数据就是 webm
-  if (blob.type === 'audio/wav' || blob.type === '') {
-    correctedBlob = new Blob([blob], { type: 'audio/webm' });
-    console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
-  } else {
-    correctedBlob = blob;
-  }
+    console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
   
-  console.log('📊 Blob 详情:', {
-    originalType: blob?.type,
-    correctedType: correctedBlob?.type,
-    size: correctedBlob?.size,
-    sizeInMB: correctedBlob ? (correctedBlob.size / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'
-  });
-} else {
-  console.log('📊 Blob 为 null');
-}
-
-// 后续使用 correctedBlob 而不是 blob
-if (correctedBlob) {
-  const url = URL.createObjectURL(correctedBlob);
-  // ... 后续代码
-  uploadSegment(correctedBlob, currentSegment); // ✅ 传 correctedBlob
-}
-    
-    if (blob) {
-      const url = URL.createObjectURL(blob);
+    // 修正 MIME 类型
+    let correctedBlob: Blob | null = blob;  // ✅ 显式声明类型
+    if (blob && correctedBlob) {  // ✅ 同时检查两个
+      if (blob.type === 'audio/wav' || blob.type === '') {
+        correctedBlob = new Blob([blob], { type: 'audio/webm' });
+        console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
+      }
       
-      // 更新段状态为已录制
-      setSegments(prev => {
-        const newSegments = [...prev];
-        newSegments[currentSegment] = {
-          ...newSegments[currentSegment],
-          status: 'recorded',
-          blob,
-          url,
-        };
-        return newSegments;
+      console.log('📊 Blob 详情:', {
+        originalType: blob?.type,
+        correctedType: correctedBlob?.type,
+        size: correctedBlob.size,  // 不需要 !
+        sizeInMB: (correctedBlob.size / 1024 / 1024).toFixed(2) + ' MB'
       });
-
-      // 自动上传
-      uploadSegment(blob, currentSegment);
     } else {
-      // 录制失败，回到 pending
+      console.log('📊 Blob 为 null');
+      // 录制失败处理
       setSegments(prev => {
         const newSegments = [...prev];
         newSegments[currentSegment] = {
@@ -167,6 +134,27 @@ if (correctedBlob) {
         };
         return newSegments;
       });
+      return; // 提前返回
+    }
+  
+    // ✅ 确保 correctedBlob 不为 null 才继续
+    if (correctedBlob) {
+      const url = URL.createObjectURL(correctedBlob);
+      
+      // 更新段状态为已录制
+      setSegments(prev => {
+        const newSegments = [...prev];
+        newSegments[currentSegment] = {
+          ...newSegments[currentSegment],
+          status: 'recorded',
+          blob: correctedBlob,
+          url,
+        };
+        return newSegments;
+      });
+  
+      // ✅ 自动上传（已检查非空）
+      uploadSegment(correctedBlob, currentSegment);
     }
   }, [state.isRecording, stopRecording, currentSegment]);
 
@@ -194,9 +182,8 @@ if (correctedBlob) {
 
   // 结束录音（手动）
   const handleTouchEnd = useCallback(async () => {
-    console.log('🔵 handleTouchEnd 执行', 'isHoldStarting:', isHoldStarting, '录制时间:', state.recordingTime, '是否录制中:', state.isRecording);
+    console.log('🔵 handleTouchEnd 执行');
     
-    // 如果还在按住延迟中，取消录音
     if (isHoldStarting) {
       console.log('⏹️ 按住延迟中，取消录音');
       if (holdTimerRef.current) {
@@ -205,14 +192,13 @@ if (correctedBlob) {
       setIsHoldStarting(false);
       return;
     }
-
-    // 如果已经在自动停止处理中，不要重复执行
+  
     if (!state.isRecording || state.recordingTime >= SEGMENT_DURATION) {
-      console.log('⏭️ 跳过手动停止，由自动停止处理或已超时');
+      console.log('⏭️ 跳过手动停止');
       return;
     }
-
-    // 手动停止：同样需要 processing 状态
+  
+    // 更新状态为 processing
     setSegments(prev => {
       const newSegments = [...prev];
       newSegments[currentSegment] = { 
@@ -221,58 +207,49 @@ if (correctedBlob) {
       };
       return newSegments;
     });
-
-    const blob = await stopRecording();
-console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
-
-// ✅ 添加：强制修正 MIME 类型（解决 wav/webm 混乱）
-let correctedBlob = blob;
-if (blob) {
-  // Edge/Chrome 录的是 webm，但可能错误标记为 wav
-  const isActuallyWebm = blob.size > 1000; // 有数据就是 webm
-  if (blob.type === 'audio/wav' || blob.type === '') {
-    correctedBlob = new Blob([blob], { type: 'audio/webm' });
-    console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
-  } else {
-    correctedBlob = blob;
-  }
   
-  console.log('📊 Blob 详情:', {
-    originalType: blob?.type,
-    correctedType: correctedBlob?.type,
-    size: correctedBlob?.size,
-    sizeInMB: correctedBlob ? (correctedBlob.size / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'
-  });
-} else {
-  console.log('📊 Blob 为 null');
-}
-
-// 后续使用 correctedBlob 而不是 blob
-if (correctedBlob) {
-  const url = URL.createObjectURL(correctedBlob);
-  // ... 后续代码
-  uploadSegment(correctedBlob, currentSegment); // ✅ 传 correctedBlob
-}
-    
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      
-      // 更新段状态为已录制
-      setSegments(prev => {
-        const newSegments = [...prev];
-        newSegments[currentSegment] = {
-          ...newSegments[currentSegment],
-          status: 'recorded',
-          blob,
-          url,
-        };
-        return newSegments;
-      });
-
-      // 自动上传
-      uploadSegment(blob, currentSegment);
+    const blob = await stopRecording();
+  
+  // 修正 MIME 类型
+  let correctedBlob: Blob | null = blob;  // ✅ 显式声明类型
+  if (blob) {
+    if (blob.type === 'audio/wav' || blob.type === '') {
+      correctedBlob = new Blob([blob], { type: 'audio/webm' });
+      console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
     }
-  }, [isHoldStarting, state.isRecording, state.recordingTime, stopRecording, currentSegment]);
+  } else {
+    // 录制失败
+    setSegments(prev => {
+      const newSegments = [...prev];
+      newSegments[currentSegment] = {
+        ...newSegments[currentSegment],
+        status: 'error',
+        errorMsg: '录制失败',
+      };
+      return newSegments;
+    });
+    return;
+  }
+
+  // ✅ 确保 correctedBlob 不为 null
+  if (correctedBlob) {
+    const url = URL.createObjectURL(correctedBlob);
+    
+    setSegments(prev => {
+      const newSegments = [...prev];
+      newSegments[currentSegment] = {
+        ...newSegments[currentSegment],
+        status: 'recorded',
+        blob: correctedBlob,
+        url,
+      };
+      return newSegments;
+    });
+
+    // ✅ 已检查非空
+    uploadSegment(correctedBlob, currentSegment);
+  }
+}, [isHoldStarting, state.isRecording, state.recordingTime, stopRecording, currentSegment]);
 
   // 主动停止录音（新增：按钮点击停止）
   const handleManualStop = useCallback(async () => {
