@@ -21,7 +21,7 @@ export interface UseRecorderReturn {
   streamRef: React.RefObject<MediaStream | null>;
 }
 
-const MAX_RECORDING_TIME = 60; // 60秒限制
+
 
 export function useRecorder(): UseRecorderReturn {
   const [state, setState] = useState<RecorderState>({
@@ -105,7 +105,7 @@ export function useRecorder(): UseRecorderReturn {
             lastVolumeTimeRef.current = timestamp;
             
             if (analyserRef.current && dataArrayRef.current) {
-              analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array);
+              analyserRef.current.getByteFrequencyData(dataArrayRef.current as any); // ✅ 加 as any
               const sum = dataArrayRef.current.reduce((a, b) => a + b, 0);
               const average = sum / dataArrayRef.current.length || 0;
               const normalizedVolume = Math.min(average / 128, 1);
@@ -222,7 +222,7 @@ export function useRecorder(): UseRecorderReturn {
             lastVolumeTimeRef.current = timestamp;
             
             if (analyserRef.current && dataArrayRef.current) {
-              analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array);
+              analyserRef.current.getByteFrequencyData(dataArrayRef.current as any); // ✅ 加 as any
               const sum = dataArrayRef.current.reduce((a, b) => a + b, 0);
               const average = sum / dataArrayRef.current.length || 0;
               const normalizedVolume = Math.min(average / 128, 1);
