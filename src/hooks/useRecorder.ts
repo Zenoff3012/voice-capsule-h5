@@ -37,7 +37,9 @@ export function useRecorder(): UseRecorderReturn {
   const recorderRef = useRef<RecordRTC | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const volumeRef = useRef<NodeJS.Timeout | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastVolumeTimeRef = useRef<number>(0);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
 
@@ -67,7 +69,7 @@ export function useRecorder(): UseRecorderReturn {
       // 初始化 RecordRTC
       recorderRef.current = new RecordRTC(stream, {
         type: 'audio',
-        mimeType: 'audio/webm;codecs=pcm',
+        mimeType: 'audio/webm', // 简化，去掉 pcm 避免兼容性问题
         recorderType: RecordRTC.StereoAudioRecorder,
         numberOfAudioChannels: 1,
         desiredSampRate: 44100,
@@ -83,28 +85,39 @@ export function useRecorder(): UseRecorderReturn {
         recordingTime: 0,
       }));
 
-      // 开始计时
+      // 开始计时（每秒更新）
       timerRef.current = setInterval(() => {
         setState(prev => {
           const newTime = prev.recordingTime + 1;
-          if (newTime >= MAX_RECORDING_TIME) {
-            // 到达最大时间自动停止
-            stopRecording();
-          }
           return { ...prev, recordingTime: newTime };
         });
       }, 1000);
 
-      // 开始音量检测
-      volumeRef.current = setInterval(() => {
-        if (analyserRef.current) {
-          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-          analyserRef.current.getByteFrequencyData(dataArray);
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          const normalizedVolume = Math.min(average / 128, 1); // 归一化到 0-1
-          setState(prev => ({ ...prev, volume: normalizedVolume }));
-        }
-      }, 100);
+      // ✅ 修复：使用 requestAnimationFrame 替代 setInterval，降低频率到 200ms
+      if (analyserRef.current) {
+        dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+        lastVolumeTimeRef.current = performance.now();
+        
+        const updateVolume = (timestamp: number) => {
+          if (!recorderRef.current) return; // 录音停止时退出
+          
+          if (timestamp - lastVolumeTimeRef.current > 200) { // 每 200ms 更新一次
+            lastVolumeTimeRef.current = timestamp;
+            
+            if (analyserRef.current && dataArrayRef.current) {
+              analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array);
+              const sum = dataArrayRef.current.reduce((a, b) => a + b, 0);
+              const average = sum / dataArrayRef.current.length || 0;
+              const normalizedVolume = Math.min(average / 128, 1);
+              setState(prev => ({ ...prev, volume: normalizedVolume }));
+            }
+          }
+          
+          rafRef.current = requestAnimationFrame(updateVolume);
+        };
+        
+        rafRef.current = requestAnimationFrame(updateVolume);
+      }
 
     } catch (err) {
       console.error('录音启动失败:', err);
@@ -130,9 +143,11 @@ export function useRecorder(): UseRecorderReturn {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      if (volumeRef.current) {
-        clearInterval(volumeRef.current);
-        volumeRef.current = null;
+      
+      // ✅ 修复：取消 requestAnimationFrame
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
 
       // 停止音频分析
@@ -175,8 +190,9 @@ export function useRecorder(): UseRecorderReturn {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      if (volumeRef.current) {
-        clearInterval(volumeRef.current);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
       setState(prev => ({ ...prev, isPaused: true }));
     }
@@ -186,29 +202,43 @@ export function useRecorder(): UseRecorderReturn {
   const resumeRecording = useCallback(() => {
     if (recorderRef.current && state.isPaused) {
       recorderRef.current.resumeRecording();
+      
       // 恢复计时
       timerRef.current = setInterval(() => {
         setState(prev => {
           const newTime = prev.recordingTime + 1;
-          if (newTime >= MAX_RECORDING_TIME) {
-            stopRecording();
-          }
           return { ...prev, recordingTime: newTime };
         });
       }, 1000);
-      // 恢复音量检测
-      volumeRef.current = setInterval(() => {
-        if (analyserRef.current) {
-          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-          analyserRef.current.getByteFrequencyData(dataArray);
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          const normalizedVolume = Math.min(average / 128, 1);
-          setState(prev => ({ ...prev, volume: normalizedVolume }));
-        }
-      }, 100);
+      
+      // ✅ 修复：恢复音量检测（使用 RAF）
+      if (analyserRef.current) {
+        lastVolumeTimeRef.current = performance.now();
+        
+        const updateVolume = (timestamp: number) => {
+          if (!recorderRef.current) return;
+          
+          if (timestamp - lastVolumeTimeRef.current > 200) {
+            lastVolumeTimeRef.current = timestamp;
+            
+            if (analyserRef.current && dataArrayRef.current) {
+              analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array);
+              const sum = dataArrayRef.current.reduce((a, b) => a + b, 0);
+              const average = sum / dataArrayRef.current.length || 0;
+              const normalizedVolume = Math.min(average / 128, 1);
+              setState(prev => ({ ...prev, volume: normalizedVolume }));
+            }
+          }
+          
+          rafRef.current = requestAnimationFrame(updateVolume);
+        };
+        
+        rafRef.current = requestAnimationFrame(updateVolume);
+      }
+      
       setState(prev => ({ ...prev, isPaused: false }));
     }
-  }, [state.isPaused, stopRecording]);
+  }, [state.isPaused]);
 
   // 重置录音状态
   const resetRecording = useCallback(() => {
@@ -217,9 +247,9 @@ export function useRecorder(): UseRecorderReturn {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    if (volumeRef.current) {
-      clearInterval(volumeRef.current);
-      volumeRef.current = null;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -247,8 +277,10 @@ export function useRecorder(): UseRecorderReturn {
     streamRef.current = null;
     audioContextRef.current = null;
     analyserRef.current = null;
+    dataArrayRef.current = null;
   }, [state.audioUrl]);
 
+  // ✅ 确保返回对象
   return {
     state,
     startRecording,
@@ -260,4 +292,5 @@ export function useRecorder(): UseRecorderReturn {
   };
 }
 
+// ✅ 正确的导出位置
 export default useRecorder;
