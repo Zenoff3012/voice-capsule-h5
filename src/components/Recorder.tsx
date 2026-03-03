@@ -1,5 +1,5 @@
-//import React, { useState, useRef, useCallback } from 'react';
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+//import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, Square, RotateCcw, Check, Volume2, AlertCircle, ChevronRight, Loader2 } from 'lucide-react';
 import { useRecorder } from '../hooks/useRecorder';
 import { uploadAudioSegment } from '../utils/cos-upload';
@@ -84,6 +84,7 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
   // 自动停止：60秒倒计时结束
   useEffect(() => {
     if (state.isRecording && state.recordingTime >= SEGMENT_DURATION) {
+      console.log('⏰ 60秒到，自动停止录音');
       handleAutoStop();
     }
   }, [state.isRecording, state.recordingTime]);
