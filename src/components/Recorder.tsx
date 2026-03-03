@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+//import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, Square, RotateCcw, Check, Volume2, AlertCircle, ChevronRight, Loader2 } from 'lucide-react';
 import { useRecorder } from '../hooks/useRecorder';
 import { uploadAudioSegment } from '../utils/cos-upload';
