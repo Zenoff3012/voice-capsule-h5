@@ -38,6 +38,7 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // 音量可视化
+  /*
   useEffect(() => {
     if (!canvasRef.current || !state.isRecording) return;
 
@@ -85,6 +86,32 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
       handleAutoStop();
     }
   }, [state.isRecording, state.recordingTime]);
+  */
+
+  // 改为简单的静态显示
+  {/* 音量可视化 - 简化为静态，排除 Canvas 性能问题 */}
+<div className="h-16 w-full max-w-xs mb-6">
+  {state.isRecording ? (
+    <div className="flex items-center justify-center h-full gap-1">
+      {[...Array(8)].map((_, i) => (
+        <div 
+          key={i}
+          className="w-2 bg-orange-500 rounded-full animate-pulse"
+          style={{ 
+            height: `${Math.max(20, state.volume * 100)}%`,
+            animationDelay: `${i * 0.1}s`
+          }}
+        />
+      ))}
+    </div>
+  ) : (
+    <div className="flex items-center justify-center h-full text-gray-400">
+      <Volume2 className="w-6 h-6 mr-2" />
+      <span className="text-sm">等待录音...</span>
+    </div>
+  )}
+</div>
+  
 
   // 自动停止处理（区分于手动停止）
   const handleAutoStop = useCallback(async () => {
