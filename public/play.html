@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>亲声胶囊 - 用声音传递心意</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             min-height: 100vh;
             display: flex;
@@ -15,6 +21,7 @@
             align-items: center;
             padding: 20px;
         }
+        
         .container {
             width: 100%;
             max-width: 400px;
@@ -23,100 +30,343 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
             margin-top: 20px;
+            animation: fadeIn 0.5s ease-out;
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .header {
             background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
             color: white;
-            padding: 30px;
+            padding: 30px 20px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
-        .header h1 { font-size: 24px; margin-bottom: 8px; }
-        .header p { opacity: 0.9; font-size: 14px; }
         
-        .content { padding: 30px; }
+        .header::before {
+            content: '❝';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            font-size: 80px;
+            opacity: 0.1;
+        }
         
+        .header h1 { 
+            font-size: 24px; 
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        .header p { 
+            opacity: 0.9; 
+            font-size: 14px;
+            font-weight: 300;
+        }
+        
+        .content { padding: 24px; }
+        
+        /* 信息卡片 */
         .info-card {
             background: #fff7ed;
             border-radius: 16px;
             padding: 20px;
             margin-bottom: 24px;
             border-left: 4px solid #f97316;
+            position: relative;
         }
-        .info-label { font-size: 12px; color: #9a3412; margin-bottom: 4px; font-weight: 600; }
-        .info-value { font-size: 18px; color: #7c2d12; font-weight: bold; }
-        .info-task { font-size: 14px; color: #c2410c; margin-top: 8px; font-family: monospace; }
         
+        .info-row {
+            margin-bottom: 12px;
+        }
+        
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label { 
+            font-size: 12px; 
+            color: #9a3412; 
+            margin-bottom: 4px; 
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value { 
+            font-size: 18px; 
+            color: #7c2d12; 
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        
+        .info-message {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #fed7aa;
+            font-size: 15px;
+            color: #92400e;
+            line-height: 1.6;
+            font-style: italic;
+        }
+        
+        .task-id {
+            display: inline-block;
+            background: #ffedd5;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #c2410c;
+            margin-top: 4px;
+        }
+        
+        /* 播放器区域 */
         .player-container {
             background: #f9fafb;
-            border-radius: 16px;
-            padding: 24px;
+            border-radius: 20px;
+            padding: 32px 24px;
             text-align: center;
+            border: 2px solid #f3f4f6;
+        }
+        
+        .play-btn-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
         }
         
         .play-btn {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
             background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
             border: none;
             color: white;
-            font-size: 32px;
+            font-size: 36px;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
-            transition: transform 0.2s;
+            box-shadow: 0 8px 25px rgba(249, 115, 22, 0.4);
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 16px;
+            position: relative;
+            z-index: 2;
         }
-        .play-btn:active { transform: scale(0.95); }
-        .play-btn.playing { background: #dc2626; }
         
-        .audio-status { color: #6b7280; font-size: 14px; margin-bottom: 8px; }
+        .play-btn:active { 
+            transform: scale(0.95); 
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+        }
         
-        audio { width: 100%; margin-top: 16px; border-radius: 8px; }
+        .play-btn.playing { 
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+        }
         
-        .processing {
+        /* 播放按钮波纹动画 */
+        .play-btn-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(249, 115, 22, 0.3);
+            transform: translate(-50%, -50%) scale(1);
+            animation: pulse-ring 2s ease-out infinite;
+            z-index: 1;
+        }
+        
+        .play-btn.playing + .pulse-ring,
+        .play-btn-wrapper:has(.playing)::before {
+            background: rgba(220, 38, 38, 0.3);
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+        }
+        
+        .audio-status { 
+            color: #4b5563; 
+            font-size: 15px; 
+            margin-bottom: 12px;
+            font-weight: 500;
+            min-height: 22px;
+        }
+        
+        .audio-time {
+            color: #9ca3af;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        
+        audio { 
+            width: 100%; 
+            margin-top: 16px;
+            border-radius: 50px;
+            height: 40px;
+        }
+        
+        /* 下载按钮 */
+        .action-bar {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 25px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: #f97316;
+            color: white;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-secondary:active {
+            background: #e5e7eb;
+        }
+        
+        /* 制作中状态 */
+        .processing-state {
             text-align: center;
             padding: 40px 20px;
-            color: #6b7280;
         }
+        
+        .spinner-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+        }
+        
         .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #f3f4f6;
+            width: 100%;
+            height: 100%;
+            border: 4px solid #ffedd5;
             border-top: 4px solid #f97316;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .error {
-            background: #fef2f2;
-            color: #dc2626;
-            padding: 20px;
-            border-radius: 12px;
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        .processing-text {
+            font-size: 18px;
+            color: #374151;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .processing-subtext {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+        
+        .countdown {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #f97316;
+            font-weight: 500;
+        }
+        
+        /* 错误状态 */
+        .error-state {
             text-align: center;
+            padding: 40px 20px;
         }
         
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .error-text {
+            color: #dc2626;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .btn-retry {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        /* 底部信息 */
         .footer {
-            margin-top: 24px;
+            margin-top: 32px;
             text-align: center;
             color: #92400e;
             font-size: 12px;
+            opacity: 0.8;
+            line-height: 1.6;
         }
         
-        .copy-btn {
-            background: #f97316;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            margin-left: 8px;
+        .footer p:first-child {
+            font-weight: 600;
+            margin-bottom: 4px;
         }
+        
+        /* 隐藏默认音频控件的文字（部分浏览器） */
+        audio::-webkit-media-controls-panel {
+            background: #f9fafb;
+        }
+        
+        /* 加载占位 */
+        .skeleton {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+            height: 20px;
+            margin-bottom: 12px;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -127,153 +377,357 @@
         </div>
         
         <div class="content" id="content">
-            <!-- 动态内容 -->
-            <div class="processing">
-                <div class="spinner"></div>
-                <p>正在加载胶囊...</p>
+            <!-- 加载状态 -->
+            <div id="loadingState" class="processing-state">
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                </div>
+                <div class="processing-text">正在加载胶囊...</div>
+                <div class="processing-subtext">请稍候</div>
             </div>
         </div>
         
         <div class="footer">
             <p>亲声胶囊 · 用声音传递心意</p>
-            <p style="margin-top: 4px; opacity: 0.7;">技术支持：AI语音处理</p>
+            <p>技术支持：AI语音处理</p>
         </div>
     </div>
 
     <script>
-        // 解析URL参数获取taskId
+        // 配置：根据环境自动切换 API 地址
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8000'  // 本地开发
+            : 'https://voicecapsule-aofghbricj.cn-hangzhou.fcapp.run';  // 生产环境（替换为你的实际域名）
+        
+        // 解析 URL 参数获取 taskId
         const urlParams = new URLSearchParams(window.location.search);
         const taskId = urlParams.get('id');
         
-        const API_BASE = window.location.hostname === 'localhost' 
-            ? 'http://localhost:8000' 
-            : 'https://your-backend-domain.com'; // 替换为你的后端域名
+        let refreshInterval = null;
+        let audioPlayer = null;
         
-        async function loadCapsule() {
+        // 初始化
+        async function init() {
             if (!taskId) {
-                showError('缺少胶囊编号，请检查链接是否正确');
+                showError('缺少胶囊编号<br>请检查链接是否完整');
                 return;
             }
             
+            await loadCapsule();
+        }
+        
+        // 加载胶囊数据
+        async function loadCapsule() {
             try {
+                showLoading();
+                
                 const response = await fetch(`${API_BASE}/api/capsule/${taskId}`);
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    throw new Error(data.detail || '加载失败');
+                    throw new Error(data.message || '加载失败');
                 }
                 
-                if (data.status === 'processing') {
-                    showProcessing(data);
-                } else if (data.status === 'completed') {
+                console.log('胶囊数据:', data);
+                
+                // 根据状态显示不同界面
+                if (data.status === 'completed' && data.audio_url) {
                     showPlayer(data);
+                    stopAutoRefresh();
+                } else if (data.status === 'processing' || data.status === 'recording') {
+                    showProcessing(data);
+                    startAutoRefresh();
+                } else if (data.status === 'pending') {
+                    showProcessing({
+                        ...data,
+                        status: 'processing',
+                        message: '等待制作中'
+                    });
+                    startAutoRefresh();
                 } else {
                     showError('胶囊状态异常，请联系客服');
                 }
+                
             } catch (error) {
-                showError('加载失败：' + error.message);
+                console.error('加载失败:', error);
+                showError('加载失败: ' + error.message);
             }
         }
         
+        // 显示加载中
+        function showLoading() {
+            document.getElementById('content').innerHTML = `
+                <div class="processing-state">
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="processing-text">正在加载胶囊...</div>
+                </div>
+            `;
+        }
+        
+        // 显示制作中状态
         function showProcessing(data) {
             const content = document.getElementById('content');
             content.innerHTML = `
-                <div class="info-card">
-                    <div class="info-label">胶囊编号</div>
-                    <div class="info-task">${taskId}</div>
+                <div class="info-card" style="margin-bottom: 20px;">
+                    <div class="info-row">
+                        <div class="info-label">胶囊编号</div>
+                        <div class="task-id">${taskId}</div>
+                    </div>
                 </div>
-                <div class="processing">
-                    <div class="spinner"></div>
-                    <p style="font-size: 16px; color: #374151; margin-bottom: 8px;">声音正在制作中</p>
-                    <p style="font-size: 14px; color: #6b7280;">请稍后再试，通常需要10-30分钟</p>
+                
+                <div class="processing-state">
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="processing-text">声音正在制作中</div>
+                    <div class="processing-subtext">
+                        工作人员正在检查音频质量并合成<br>
+                        通常需要 10-30 分钟
+                    </div>
+                    <div class="countdown" id="countdown">30秒后自动刷新...</div>
                 </div>
             `;
+            
+            // 倒计时显示
+            let seconds = 30;
+            const countdownEl = document.getElementById('countdown');
+            if (countdownEl) {
+                const timer = setInterval(() => {
+                    seconds--;
+                    if (seconds <= 0) {
+                        clearInterval(timer);
+                    } else {
+                        countdownEl.textContent = `${seconds}秒后自动刷新...`;
+                    }
+                }, 1000);
+            }
         }
         
+        // 显示播放器
         function showPlayer(data) {
             const content = document.getElementById('content');
+            
+            // 计算音频时长显示（如果有）
+            const durationText = data.duration || '约1-3分钟';
+            
             content.innerHTML = `
                 <div class="info-card">
-                    <div class="info-label">来自</div>
-                    <div class="info-value">${data.sender || '亲爱的家人'}</div>
-                    <div class="info-label" style="margin-top: 12px;">给</div>
-                    <div class="info-value">${data.receiver || '宝贝'}</div>
+                    <div class="info-row">
+                        <div class="info-label">来自</div>
+                        <div class="info-value">${escapeHtml(data.sender || '亲爱的家人')}</div>
+                    </div>
+                    
+                    <div class="info-row" style="margin-top: 16px;">
+                        <div class="info-label">给</div>
+                        <div class="info-value">${escapeHtml(data.receiver || '宝贝')}</div>
+                    </div>
+                    
                     ${data.message ? `
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #fed7aa;">
-                        <div class="info-label">留言</div>
-                        <div style="color: #7c2d12; font-size: 14px; margin-top: 4px;">${data.message}</div>
+                    <div class="info-message">
+                        "${escapeHtml(data.message)}"
                     </div>
                     ` : ''}
+                    
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #fed7aa;">
+                        <div class="info-label">录制时间</div>
+                        <div style="font-size: 13px; color: #92400e; margin-top: 4px;">
+                            ${formatDate(data.created_at)}
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="player-container">
-                    <div class="audio-status">点击播放声音胶囊</div>
-                    <button class="play-btn" id="playBtn" onclick="togglePlay()">
-                        <span id="playIcon">▶</span>
-                    </button>
-                    <div style="color: #9ca3af; font-size: 12px;">时长：${data.duration || '约1分钟'}</div>
-                    <audio id="audioPlayer" src="${data.audio_url}" preload="none" 
-                        onplay="onPlay()" onpause="onPause()" onended="onEnded()"></audio>
+                    <div class="audio-status" id="audioStatus">点击播放声音胶囊</div>
+                    
+                    <div class="play-btn-wrapper">
+                        <button class="play-btn" id="playBtn" onclick="togglePlay()">
+                            <span id="playIcon">▶</span>
+                        </button>
+                    </div>
+                    
+                    <div class="audio-time">时长：${durationText}</div>
+                    
+                    <audio 
+                        id="audioPlayer" 
+                        src="${data.audio_url}" 
+                        preload="metadata"
+                        onplay="onPlay()" 
+                        onpause="onPause()" 
+                        onended="onEnded()"
+                        onerror="onAudioError()"
+                    ></audio>
                 </div>
                 
-                <div style="margin-top: 20px; text-align: center;">
-                    <button onclick="downloadAudio('${data.audio_url}')" 
-                        style="background: #f3f4f6; border: none; padding: 10px 20px; 
-                               border-radius: 20px; color: #374151; cursor: pointer; font-size: 14px;">
-                        📥 下载保存
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="downloadAudio()">
+                        <span>⬇</span> 保存到本地
+                    </button>
+                    <button class="btn btn-secondary" onclick="shareLink()">
+                        <span>↗</span> 分享
                     </button>
                 </div>
             `;
+            
+            audioPlayer = document.getElementById('audioPlayer');
         }
         
-        function showError(msg) {
+        // 显示错误
+        function showError(message) {
+            stopAutoRefresh();
             document.getElementById('content').innerHTML = `
-                <div class="error">
-                    <div style="font-size: 32px; margin-bottom: 8px;">😕</div>
-                    <div>${msg}</div>
+                <div class="error-state">
+                    <div class="error-icon">😕</div>
+                    <div class="error-text">${message}</div>
+                    <button class="btn-retry" onclick="loadCapsule()">重新加载</button>
                 </div>
             `;
         }
         
+        // 播放控制
         function togglePlay() {
-            const audio = document.getElementById('audioPlayer');
-            if (audio.paused) {
-                audio.play();
+            if (!audioPlayer) return;
+            
+            if (audioPlayer.paused) {
+                audioPlayer.play().catch(e => {
+                    console.error('播放失败:', e);
+                    alert('音频加载失败，请刷新页面重试');
+                });
             } else {
-                audio.pause();
+                audioPlayer.pause();
             }
         }
         
         function onPlay() {
-            document.getElementById('playBtn').classList.add('playing');
-            document.getElementById('playIcon').innerHTML = '⏸';
-            document.querySelector('.audio-status').textContent = '正在播放...';
+            const btn = document.getElementById('playBtn');
+            const icon = document.getElementById('playIcon');
+            const status = document.getElementById('audioStatus');
+            
+            if (btn) btn.classList.add('playing');
+            if (icon) icon.innerHTML = '⏸';
+            if (status) status.textContent = '正在播放...';
         }
         
         function onPause() {
-            document.getElementById('playBtn').classList.remove('playing');
-            document.getElementById('playIcon').innerHTML = '▶';
-            document.querySelector('.audio-status').textContent = '点击继续播放';
+            const btn = document.getElementById('playBtn');
+            const icon = document.getElementById('playIcon');
+            const status = document.getElementById('audioStatus');
+            
+            if (btn) btn.classList.remove('playing');
+            if (icon) icon.innerHTML = '▶';
+            if (status) status.textContent = '点击继续播放';
         }
         
         function onEnded() {
-            document.getElementById('playBtn').classList.remove('playing');
-            document.getElementById('playIcon').innerHTML = '▶';
-            document.querySelector('.audio-status').textContent = '播放完成';
+            const btn = document.getElementById('playBtn');
+            const icon = document.getElementById('playIcon');
+            const status = document.getElementById('audioStatus');
+            
+            if (btn) btn.classList.remove('playing');
+            if (icon) icon.innerHTML = '▶';
+            if (status) status.textContent = '播放完成';
         }
         
-        function downloadAudio(url) {
-            window.open(url, '_blank');
+        function onAudioError() {
+            document.getElementById('audioStatus').textContent = '音频加载失败';
+            alert('音频文件加载失败，请检查链接或联系客服');
         }
         
-        // 页面加载后自动获取
-        loadCapsule();
+        // 下载音频
+        function downloadAudio() {
+            if (!audioPlayer || !audioPlayer.src) {
+                alert('音频未准备好');
+                return;
+            }
+            
+            // 创建临时链接下载
+            const link = document.createElement('a');
+            link.href = audioPlayer.src;
+            link.download = `亲声胶囊_${taskId}.mp3`;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
         
-        // 如果正在制作中，每30秒刷新一次
-        setInterval(() => {
-            const processing = document.querySelector('.processing');
-            if (processing) loadCapsule();
-        }, 30000);
+        // 分享链接
+        function shareLink() {
+            const shareUrl = window.location.href;
+            
+            if (navigator.share) {
+                // 移动端原生分享
+                navigator.share({
+                    title: '亲声胶囊 - 来自家人的声音礼物',
+                    text: '点击收听这段特别的声音礼物',
+                    url: shareUrl
+                }).catch(console.error);
+            } else {
+                // 复制到剪贴板
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert('链接已复制，快去分享给家人吧！');
+                }).catch(() => {
+                    prompt('请复制以下链接分享给家人：', shareUrl);
+                });
+            }
+        }
+        
+        // 自动刷新（制作中状态时）
+        function startAutoRefresh() {
+            stopAutoRefresh(); // 先清除旧的
+            refreshInterval = setInterval(() => {
+                console.log('自动刷新检查状态...');
+                loadCapsule();
+            }, 30000); // 30秒刷新一次
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+        
+        // 工具函数：HTML转义防XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 工具函数：格式化日期
+        function formatDate(dateStr) {
+            if (!dateStr) return '未知时间';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateStr;
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // 页面可见性变化时控制刷新（省电）
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                // 页面重新可见时检查是否需要刷新
+                const status = document.querySelector('.processing-state');
+                if (status) {
+                    startAutoRefresh();
+                }
+            }
+        });
     </script>
 </body>
 </html>
