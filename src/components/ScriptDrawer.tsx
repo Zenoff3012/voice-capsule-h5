@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, MessageSquare } from 'lucide-react';
+import { X, MessageSquare, Check } from 'lucide-react';
 
 interface Script {
   id: string;
@@ -43,20 +43,34 @@ export const ScriptDrawer: React.FC<ScriptDrawerProps> = ({
 }) => {
   const [scripts, setScripts] = useState<Script[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null); // 记录当前选中的ID，用于显示勾选标记
+  const [showToast, setShowToast] = useState(false); // 显示"已选择"提示
 
   useEffect(() => {
     if (visible) {
       setLoading(true);
-      // TODO: 替换为真实 API
-      // import { fetchScripts } from '../utils/api';
-      // fetchScripts(segmentIndex).then(setScripts);
+      setSelectedId(null); // 重置选中状态
+      setShowToast(false);
       
+      // TODO: 替换为真实 API
       setTimeout(() => {
         setScripts(MOCK_SCRIPTS[segmentIndex] || []);
         setLoading(false);
       }, 100);
     }
   }, [visible, segmentIndex]);
+
+  const handleSelect = (script: Script) => {
+    setSelectedId(script.id);
+    setShowToast(true);
+    
+    // 延迟关闭，让用户看到选中效果
+    setTimeout(() => {
+      onSelect(script.content);
+      onClose();
+      setShowToast(false);
+    }, 400); // 400ms 动画时间
+  };
 
   if (!visible) return null;
 
@@ -76,38 +90,63 @@ export const ScriptDrawer: React.FC<ScriptDrawerProps> = ({
             <h3 className="text-lg font-bold text-gray-800">第 {segmentIndex + 1} 段参考话术</h3>
             <p className="text-sm text-gray-500">不知道说什么？选一句照着读</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full active:bg-gray-200">
             <X className="w-6 h-6 text-gray-600" />
           </button>
         </div>
+        
+        {/* 已选择提示 */}
+        {showToast && (
+          <div className="bg-green-100 text-green-700 px-4 py-2 text-center text-sm font-medium animate-pulse">
+            ✓ 已选择，正在加载...
+          </div>
+        )}
         
         {/* 列表 */}
         <div className="overflow-y-auto p-4 space-y-3">
           {loading ? (
             <div className="text-center py-8 text-gray-500">加载中...</div>
           ) : (
-            scripts.map((script) => (
-              <div 
-                key={script.id}
-                onClick={() => {
-                  onSelect(script.content);
-                  onClose();
-                }}
-                className="p-4 bg-gray-50 rounded-xl border-2 border-transparent hover:border-orange-400 hover:bg-orange-50 transition-all cursor-pointer active:scale-95"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageSquare className="w-4 h-4 text-orange-500" />
-                  <span className="font-bold text-gray-800">{script.title}</span>
-                  <span className="text-xs px-2 py-1 bg-gray-200 rounded-full text-gray-600 ml-auto">
-                    {script.category}
-                  </span>
+            scripts.map((script) => {
+              const isSelected = selectedId === script.id;
+              return (
+                <div 
+                  key={script.id}
+                  onClick={() => handleSelect(script)}
+                  className={`p-4 rounded-xl border-2 transition-all cursor-pointer active:scale-95 relative ${
+                    isSelected 
+                      ? 'bg-green-50 border-green-500 shadow-md' 
+                      : 'bg-gray-50 border-transparent hover:border-orange-400 hover:bg-orange-50'
+                  }`}
+                >
+                  {/* 勾选标记 */}
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 mb-2 pr-8"> {/* pr-8 防止文字被勾选标记遮挡 */}
+                    <MessageSquare className={`w-4 h-4 ${isSelected ? 'text-green-600' : 'text-orange-500'}`} />
+                    <span className={`font-bold ${isSelected ? 'text-green-800' : 'text-gray-800'}`}>
+                      {script.title}
+                    </span>
+                    <span className="text-xs px-2 py-1 bg-gray-200 rounded-full text-gray-600 ml-auto">
+                      {script.category}
+                    </span>
+                  </div>
+                  <p className={`text-sm leading-relaxed ${isSelected ? 'text-green-700' : 'text-gray-600'}`}>
+                    {script.content || <span className="italic text-gray-400">（空白，自由发挥）</span>}
+                  </p>
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  {script.content || <span className="italic text-gray-400">（空白，自由发挥）</span>}
-                </p>
-              </div>
-            ))
+              );
+            })
           )}
+        </div>
+        
+        {/* 底部提示 */}
+        <div className="p-4 border-t bg-gray-50 text-center text-xs text-gray-500">
+          点击话术即可选择并使用
         </div>
       </div>
     </div>
