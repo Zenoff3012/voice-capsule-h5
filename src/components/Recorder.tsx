@@ -20,9 +20,9 @@ interface RecorderProps {
   onBack: () => void;
 }
 
-const SEGMENT_DURATION = 60; // 每段60秒
-const MAX_RETRIES = 3; // 每段最多重试3次
-const HOLD_DELAY = 500; // 按住500ms才开始录音（防止误触）
+const SEGMENT_DURATION = 60;
+const MAX_RETRIES = 3;
+const HOLD_DELAY = 500;
 
 const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
   const { state, startRecording, stopRecording, resetRecording } = useRecorder();
@@ -34,31 +34,27 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
   ]);
   const [isHoldStarting, setIsHoldStarting] = useState(false);
   const [showGuide, setShowGuide] = useState(true);
-  
-  // 新增：话术库相关状态
   const [showScriptDrawer, setShowScriptDrawer] = useState(false);
-  const [currentScript, setCurrentScript] = useState(''); // 当前段选中的话术
+  const [currentScript, setCurrentScript] = useState('');
+  
+  // 新增：完成页相关状态
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [showCopyToast, setShowCopyToast] = useState(false);
   
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 切换段时清空话术
   useEffect(() => {
     setCurrentScript('');
   }, [currentSegment]);
 
-  // 自动停止：60秒倒计时结束
   useEffect(() => {
     if (state.isRecording && state.recordingTime >= SEGMENT_DURATION) {
       console.log('⏰ 60秒到，自动停止录音');
       handleAutoStop();
     }
   }, [state.isRecording, state.recordingTime]);
-  
-  // 改为简单的静态显示
-  {/* 音量可视化 - 简化为静态，排除 Canvas 性能问题 */}
 
-  // 自动停止处理（区分于手动停止）
   const handleAutoStop = useCallback(async () => {
     console.log('🔴 handleAutoStop 执行', '当前段:', currentSegment);
     
@@ -67,7 +63,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
       return;
     }
     
-    // 立即更新为 processing 状态
     setSegments(prev => {
       const newSegments = [...prev];
       newSegments[currentSegment] = { 
@@ -80,9 +75,8 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     const blob = await stopRecording();
     console.log('🎤 stopRecording 返回 blob:', blob ? '有数据' : '无数据');
   
-    // 修正 MIME 类型
-    let correctedBlob: Blob | null = blob;  // ✅ 显式声明类型
-    if (blob && correctedBlob) {  // ✅ 同时检查两个
+    let correctedBlob: Blob | null = blob;
+    if (blob && correctedBlob) {
       if (blob.type === 'audio/wav' || blob.type === '') {
         correctedBlob = new Blob([blob], { type: 'audio/webm' });
         console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
@@ -91,12 +85,11 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
       console.log('📊 Blob 详情:', {
         originalType: blob?.type,
         correctedType: correctedBlob?.type,
-        size: correctedBlob.size,  // 不需要 !
+        size: correctedBlob.size,
         sizeInMB: (correctedBlob.size / 1024 / 1024).toFixed(2) + ' MB'
       });
     } else {
       console.log('📊 Blob 为 null');
-      // 录制失败处理
       setSegments(prev => {
         const newSegments = [...prev];
         newSegments[currentSegment] = {
@@ -106,14 +99,12 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         };
         return newSegments;
       });
-      return; // 提前返回
+      return;
     }
   
-    // ✅ 确保 correctedBlob 不为 null 才继续
     if (correctedBlob) {
       const url = URL.createObjectURL(correctedBlob);
       
-      // 更新段状态为已录制
       setSegments(prev => {
         const newSegments = [...prev];
         newSegments[currentSegment] = {
@@ -124,16 +115,14 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         };
         return newSegments;
       });
-  
-      // ✅ 自动上传（已检查非空）
+
       uploadSegment(correctedBlob, currentSegment);
     }
   }, [state.isRecording, stopRecording, currentSegment]);
 
-  // 开始按住录音
   const handleTouchStart = useCallback(() => {
     if (segments[currentSegment].status !== 'pending' && segments[currentSegment].status !== 'error') {
-      return; // 已录制完成，不能重新录制除非重置
+      return;
     }
 
     setIsHoldStarting(true);
@@ -141,7 +130,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
       setIsHoldStarting(false);
       setShowGuide(false);
       
-      // 更新当前段状态为录制中
       setSegments(prev => {
         const newSegments = [...prev];
         newSegments[currentSegment] = { ...newSegments[currentSegment], status: 'recording' };
@@ -152,7 +140,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     }, HOLD_DELAY);
   }, [currentSegment, segments, startRecording]);
 
-  // 结束录音（手动）
   const handleTouchEnd = useCallback(async () => {
     console.log('🔵 handleTouchEnd 执行');
     
@@ -170,7 +157,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
       return;
     }
   
-    // 更新状态为 processing
     setSegments(prev => {
       const newSegments = [...prev];
       newSegments[currentSegment] = { 
@@ -182,48 +168,43 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
   
     const blob = await stopRecording();
   
-  // 修正 MIME 类型
-  let correctedBlob: Blob | null = blob;  // ✅ 显式声明类型
-  if (blob) {
-    if (blob.type === 'audio/wav' || blob.type === '') {
-      correctedBlob = new Blob([blob], { type: 'audio/webm' });
-      console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
+    let correctedBlob: Blob | null = blob;
+    if (blob) {
+      if (blob.type === 'audio/wav' || blob.type === '') {
+        correctedBlob = new Blob([blob], { type: 'audio/webm' });
+        console.log('📝 修正 MIME 类型:', blob.type, '→ audio/webm');
+      }
+    } else {
+      setSegments(prev => {
+        const newSegments = [...prev];
+        newSegments[currentSegment] = {
+          ...newSegments[currentSegment],
+          status: 'error',
+          errorMsg: '录制失败',
+        };
+        return newSegments;
+      });
+      return;
     }
-  } else {
-    // 录制失败
-    setSegments(prev => {
-      const newSegments = [...prev];
-      newSegments[currentSegment] = {
-        ...newSegments[currentSegment],
-        status: 'error',
-        errorMsg: '录制失败',
-      };
-      return newSegments;
-    });
-    return;
-  }
 
-  // ✅ 确保 correctedBlob 不为 null
-  if (correctedBlob) {
-    const url = URL.createObjectURL(correctedBlob);
-    
-    setSegments(prev => {
-      const newSegments = [...prev];
-      newSegments[currentSegment] = {
-        ...newSegments[currentSegment],
-        status: 'recorded',
-        blob: correctedBlob,
-        url,
-      };
-      return newSegments;
-    });
+    if (correctedBlob) {
+      const url = URL.createObjectURL(correctedBlob);
+      
+      setSegments(prev => {
+        const newSegments = [...prev];
+        newSegments[currentSegment] = {
+          ...newSegments[currentSegment],
+          status: 'recorded',
+          blob: correctedBlob,
+          url,
+        };
+        return newSegments;
+      });
 
-    // ✅ 已检查非空
-    uploadSegment(correctedBlob, currentSegment);
-  }
-}, [isHoldStarting, state.isRecording, state.recordingTime, stopRecording, currentSegment]);
+      uploadSegment(correctedBlob, currentSegment);
+    }
+  }, [isHoldStarting, state.isRecording, state.recordingTime, stopRecording, currentSegment]);
 
-  // 主动停止录音（新增：按钮点击停止）
   const handleManualStop = useCallback(async () => {
     if (!state.isRecording) return;
     
@@ -231,7 +212,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     await handleTouchEnd();
   }, [state.isRecording, handleTouchEnd]);
 
-  // 上传音频段
   const uploadSegment = async (blob: Blob, segmentIndex: number) => {
     setSegments(prev => {
       const newSegments = [...prev];
@@ -271,7 +251,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     }
   };
 
-  // 重试上传（新增：只重试上传，不重录）
   const handleRetryUpload = useCallback(async () => {
     const currentSeg = segments[currentSegment];
     if (!currentSeg.blob || currentSeg.retryCount >= MAX_RETRIES) {
@@ -282,7 +261,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     await uploadSegment(currentSeg.blob, currentSegment);
   }, [currentSegment, segments]);
 
-  // 重录当前段
   const handleRetry = useCallback(() => {
     const currentSeg = segments[currentSegment];
     if (currentSeg.retryCount >= MAX_RETRIES) {
@@ -290,7 +268,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
       return;
     }
 
-    // 释放之前的URL
     if (currentSeg.url) {
       URL.revokeObjectURL(currentSeg.url);
     }
@@ -311,7 +288,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     resetRecording();
   }, [currentSegment, segments, resetRecording]);
 
-  // 切换到下一段
   const handleNextSegment = useCallback(() => {
     if (currentSegment < 2) {
       setCurrentSegment(prev => prev + 1);
@@ -319,24 +295,33 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     }
   }, [currentSegment, resetRecording]);
 
-  // 完成所有录制
+  // 修改：完成录制处理
   const handleComplete = useCallback(() => {
     const allUploaded = segments.every(s => s.status === 'uploaded');
     if (allUploaded) {
+      setIsCompleted(true);
+      // 通知后端（可选）
+      fetch(`/api/complete/${taskId}`, { method: 'POST' }).catch(console.error);
+      // 调用父组件的 onComplete（可选）
       onComplete(segments);
     } else {
       alert('请等待所有音频上传完成');
     }
-  }, [segments, onComplete]);
+  }, [segments, taskId, onComplete]);
 
-  // 格式化时间显示
+  // 新增：复制任务编号
+  const copyTaskId = () => {
+    navigator.clipboard.writeText(taskId);
+    setShowCopyToast(true);
+    setTimeout(() => setShowCopyToast(false), 2000);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // 获取段状态颜色
   const getSegmentColor = (segment: Segment) => {
     switch (segment.status) {
       case 'uploaded': return 'bg-green-500';
@@ -349,7 +334,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     }
   };
 
-  // 获取状态文字
   const getStatusText = (segment: Segment) => {
     switch (segment.status) {
       case 'pending': return '按住下方按钮开始录音';
@@ -366,6 +350,58 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
   const currentSeg = segments[currentSegment];
   const canRecord = currentSeg.status === 'pending' || currentSeg.status === 'error';
   const canProceed = segments.every(s => s.status === 'uploaded');
+
+  // 如果已完成，显示完成页
+  if (isCompleted) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-6">
+        <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center">
+          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-white" />
+          </div>
+          <h3 className="text-xl font-bold text-green-800 mb-2">录制完成！</h3>
+          <p className="text-green-600 mb-4">声音已安全保存，正在制作中...</p>
+          
+          <div className="bg-white rounded-xl p-4 mb-4 text-left">
+            <div className="text-sm text-gray-500 mb-1">任务编号（请保存）</div>
+            <div className="flex items-center justify-between">
+              <code className="text-lg font-mono font-bold text-orange-600">{taskId}</code>
+              <button 
+                onClick={copyTaskId}
+                className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm hover:bg-orange-200 transition-colors"
+              >
+                {showCopyToast ? '✓ 已复制' : '复制'}
+              </button>
+            </div>
+          </div>
+          
+          <div className="text-sm text-gray-600 space-y-2 bg-white/50 rounded-lg p-4 text-left">
+            <p>⏱️ 制作时间：约 30 分钟</p>
+            <p>👨‍💼 工作人员将：</p>
+            <ul className="text-xs text-gray-500 space-y-1 ml-4">
+              <li>• 检查音频质量</li>
+              <li>• 合并三段录音</li>
+              <li>• 生成专属播放链接</li>
+            </ul>
+          </div>
+          
+          <div className="mt-6 pt-4 border-t border-green-200">
+            <p className="text-sm text-green-700 mb-2">制作完成后，链接将发送至您的微信</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="text-sm text-gray-500 underline"
+            >
+              录制另一个胶囊
+            </button>
+          </div>
+        </div>
+        
+        <div className="mt-8 text-center text-xs text-gray-400">
+          <p>亲声胶囊 · 用声音传递心意</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
@@ -395,7 +431,7 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         ))}
       </div>
 
-      {/* 当前段信息 - 已添加话术库按钮 */}
+      {/* 当前段信息 */}
       <div className="text-center mb-6">
         <p className="text-lg font-medium text-gray-700 mb-2">
           第 {currentSegment + 1} 段
@@ -404,7 +440,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
           {currentSegment === 2 && ' - "祝福与期待"'}
         </p>
         
-        {/* 新增：选话术按钮 */}
         {canRecord && (
           <button
             onClick={() => setShowScriptDrawer(true)}
@@ -422,16 +457,21 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
 
       {/* 录音按钮区域 */}
       <div className="flex flex-col items-center mb-8">
-        
-        {/* 新增：话术提示卡片（如果有选中） */}
         {currentScript && (
           <div className="w-full max-w-xs mb-4 p-4 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
-            <p className="text-xs text-orange-600 font-medium mb-1">参考文案（可照着读）：</p>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-orange-600 font-medium">参考文案（可照着读）：</span>
+              <button 
+                onClick={() => setCurrentScript('')}
+                className="text-xs text-gray-400 underline ml-auto"
+              >
+                清空
+              </button>
+            </div>
             <p className="text-gray-800 text-base leading-relaxed">{currentScript}</p>
           </div>
         )}
         
-        {/* 音量可视化 */}
         <div className="h-16 w-full max-w-xs mb-6">
           {state.isRecording ? (
             <canvas
@@ -448,14 +488,12 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
           )}
         </div>
 
-        {/* 倒计时 */}
         {state.isRecording && (
           <div className="text-3xl font-mono font-bold text-orange-600 mb-4">
             {formatTime(SEGMENT_DURATION - state.recordingTime)}
           </div>
         )}
 
-        {/* 录音按钮区域 */}
         <div className="flex flex-col items-center gap-4">
           {canRecord ? (
             <>
@@ -481,7 +519,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
                 )}
               </button>
               
-              {/* 新增：主动停止按钮（录制中时显示） */}
               {state.isRecording && (
                 <button
                   onClick={handleManualStop}
@@ -525,7 +562,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
           )}
         </div>
 
-        {/* 提示文字 */}
         <p className="text-sm text-gray-500 mt-4">
           {isHoldStarting && '请继续按住...'}
           {state.isRecording && '松开或点击按钮结束录音'}
@@ -533,7 +569,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         </p>
       </div>
 
-      {/* 音频预览 */}
       {currentSeg.url && currentSeg.status !== 'uploading' && currentSeg.status !== 'processing' && (
         <div className="bg-gray-50 rounded-xl p-4 mb-6">
           <p className="text-sm text-gray-600 mb-2">预览：</p>
@@ -545,7 +580,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         </div>
       )}
 
-      {/* 错误提示 */}
       {(state.error || currentSeg.status === 'error') && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -560,7 +594,7 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         </div>
       )}
 
-      {/* 底部按钮 */}
+      {/* 底部按钮 - 只有未完成时显示 */}
       <div className="flex gap-4">
         <button
           onClick={onBack}
@@ -571,14 +605,14 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         {canProceed && (
           <button
             onClick={handleComplete}
-            className="flex-1 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors"
+            className="flex-1 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
           >
+            <Check className="w-5 h-5" />
             完成制作
           </button>
         )}
       </div>
 
-      {/* 录音提示 */}
       <div className="mt-8 p-4 bg-blue-50 rounded-xl">
         <p className="text-sm text-blue-700 font-medium mb-2">录音小贴士：</p>
         <ul className="text-sm text-blue-600 space-y-1">
@@ -589,7 +623,6 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         </ul>
       </div>
 
-      {/* 新增：话术抽屉 */}
       <ScriptDrawer 
         visible={showScriptDrawer}
         onClose={() => setShowScriptDrawer(false)}
