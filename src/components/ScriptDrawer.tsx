@@ -12,23 +12,22 @@ interface ScriptDrawerProps {
   visible: boolean;
   onClose: () => void;
   onSelect: (content: string) => void;
-  segmentIndex: number; // 0,1,2 对应第1,2,3段
+  segmentIndex: number;
 }
 
-// 按段分类的 Mock 数据（先写死测试，后面接 API）
 const MOCK_SCRIPTS: Record<number, Script[]> = {
-  0: [ // 第1段：开场/问候
+  0: [
     { id: '1', title: '给孙辈的早安', content: '宝贝，早上好呀！爷爷/奶奶今天想跟你说说心里话...', category: '亲情' },
     { id: '2', title: '给子女的鼓励', content: '孩子，工作再忙也要注意身体，爸爸妈妈永远支持你...', category: '鼓励' },
     { id: '3', title: '给老伴的问候', content: '老伴，这么多年辛苦了，我想对你说...', category: '爱情' },
     { id: '4', title: '自由发挥', content: '', category: '自定义' }
   ],
-  1: [ // 第2段：故事/回忆
+  1: [
     { id: '5', title: '小时候的故事', content: '记得你小时候，有一次咱们一起去公园，你特别开心...', category: '回忆' },
     { id: '6', title: '家族的传统', content: '咱们家有个传统，就是每年春节都要一起吃团圆饭...', category: '家训' },
     { id: '7', title: '人生的经验', content: '这些年我有一个体会，想分享给你，那就是...', category: '智慧' }
   ],
-  2: [ // 第3段：祝福/结尾
+  2: [
     { id: '8', title: '生日祝福', content: '祝你生日快乐，身体健康，天天开心，万事如意！', category: '祝福' },
     { id: '9', title: '晚安问候', content: '时间不早了，早点休息，做个好梦，明天又是新的一天。', category: '晚安' },
     { id: '10', title: '未来的期待', content: '期待下次见面，到时候咱们一起去...', category: '期待' }
@@ -43,16 +42,12 @@ export const ScriptDrawer: React.FC<ScriptDrawerProps> = ({
 }) => {
   const [scripts, setScripts] = useState<Script[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null); // 记录当前选中的ID，用于显示勾选标记
-  const [showToast, setShowToast] = useState(false); // 显示"已选择"提示
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
       setLoading(true);
-      setSelectedId(null); // 重置选中状态
-      setShowToast(false);
-      
-      // TODO: 替换为真实 API
+      setSelectedId(null);
       setTimeout(() => {
         setScripts(MOCK_SCRIPTS[segmentIndex] || []);
         setLoading(false);
@@ -61,83 +56,192 @@ export const ScriptDrawer: React.FC<ScriptDrawerProps> = ({
   }, [visible, segmentIndex]);
 
   const handleSelect = (script: Script) => {
+    console.log('选中话术:', script.id, script.title); // 调试用
     setSelectedId(script.id);
-    setShowToast(true);
     
     // 延迟关闭，让用户看到选中效果
     setTimeout(() => {
       onSelect(script.content);
       onClose();
-      setShowToast(false);
-    }, 400); // 400ms 动画时间
+    }, 500);
   };
 
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 50,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-end'
+    }}>
       {/* 遮罩 */}
       <div 
-        className="absolute inset-0 bg-black/50" 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)'
+        }}
         onClick={onClose}
       />
       
       {/* 抽屉 */}
-      <div className="relative bg-white rounded-t-2xl max-h-[70vh] flex flex-col animate-slide-up">
+      <div style={{
+        position: 'relative',
+        backgroundColor: 'white',
+        borderRadius: '16px 16px 0 0',
+        maxHeight: '70vh',
+        display: 'flex',
+        flexDirection: 'column',
+        animation: 'slideUp 0.3s ease-out'
+      }}>
         {/* 头部 */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px',
+          borderBottom: '1px solid #e5e7eb'
+        }}>
           <div>
-            <h3 className="text-lg font-bold text-gray-800">第 {segmentIndex + 1} 段参考话术</h3>
-            <p className="text-sm text-gray-500">不知道说什么？选一句照着读</p>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
+              第 {segmentIndex + 1} 段参考话术
+            </h3>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0 0 0' }}>
+              不知道说什么？选一句照着读
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full active:bg-gray-200">
-            <X className="w-6 h-6 text-gray-600" />
+          <button 
+            onClick={onClose}
+            style={{
+              padding: '8px',
+              borderRadius: '50%',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer'
+            }}
+          >
+            <X style={{ width: 24, height: 24, color: '#4b5563' }} />
           </button>
         </div>
         
-        {/* 已选择提示 */}
-        {showToast && (
-          <div className="bg-green-100 text-green-700 px-4 py-2 text-center text-sm font-medium animate-pulse">
-            ✓ 已选择，正在加载...
-          </div>
-        )}
-        
         {/* 列表 */}
-        <div className="overflow-y-auto p-4 space-y-3">
+        <div style={{
+          overflowY: 'auto',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}>
           {loading ? (
-            <div className="text-center py-8 text-gray-500">加载中...</div>
+            <div style={{ textAlign: 'center', padding: '32px', color: '#6b7280' }}>
+              加载中...
+            </div>
           ) : (
             scripts.map((script) => {
               const isSelected = selectedId === script.id;
+              
+              // 调试：在控制台看比较结果
+              console.log('渲染卡片:', script.id, 'selectedId:', selectedId, 'isSelected:', isSelected);
+              
               return (
-                <div 
+                <div
                   key={script.id}
                   onClick={() => handleSelect(script)}
-                  className={`p-4 rounded-xl border-2 transition-all cursor-pointer active:scale-95 relative ${
-                    isSelected 
-                      ? 'bg-green-50 border-green-500 shadow-md' 
-                      : 'bg-gray-50 border-transparent hover:border-orange-400 hover:bg-orange-50'
-                  }`}
+                  style={{
+                    padding: '16px',
+                    borderRadius: '12px',
+                    border: isSelected ? '2px solid #22c55e' : '2px solid transparent',
+                    backgroundColor: isSelected ? '#f0fdf4' : '#f9fafb',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'all 0.2s',
+                    transform: isSelected ? 'scale(0.98)' : 'scale(1)'
+                  }}
                 >
-                  {/* 勾选标记 */}
+                  {/* 选中标记 - 绝对定位右上角 */}
                   {isSelected && (
-                    <div className="absolute top-3 right-3 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
-                      <Check className="w-4 h-4 text-white" />
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      width: '24px',
+                      height: '24px',
+                      backgroundColor: '#22c55e',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}>
+                      <Check style={{ width: 16, height: 16, color: 'white' }} />
                     </div>
                   )}
                   
-                  <div className="flex items-center gap-2 mb-2 pr-8"> {/* pr-8 防止文字被勾选标记遮挡 */}
-                    <MessageSquare className={`w-4 h-4 ${isSelected ? 'text-green-600' : 'text-orange-500'}`} />
-                    <span className={`font-bold ${isSelected ? 'text-green-800' : 'text-gray-800'}`}>
+                  {/* 标题行 */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '8px',
+                    paddingRight: isSelected ? '32px' : '0'
+                  }}>
+                    <MessageSquare 
+                      style={{ 
+                        width: 16, 
+                        height: 16, 
+                        color: isSelected ? '#16a34a' : '#f97316',
+                        flexShrink: 0
+                      }} 
+                    />
+                    <span style={{
+                      fontWeight: 'bold',
+                      color: isSelected ? '#166534' : '#1f2937',
+                      fontSize: '16px'
+                    }}>
                       {script.title}
                     </span>
-                    <span className="text-xs px-2 py-1 bg-gray-200 rounded-full text-gray-600 ml-auto">
+                    <span style={{
+                      fontSize: '12px',
+                      padding: '4px 8px',
+                      backgroundColor: '#e5e7eb',
+                      borderRadius: '12px',
+                      color: '#4b5563',
+                      marginLeft: 'auto',
+                      flexShrink: 0
+                    }}>
                       {script.category}
                     </span>
                   </div>
-                  <p className={`text-sm leading-relaxed ${isSelected ? 'text-green-700' : 'text-gray-600'}`}>
-                    {script.content || <span className="italic text-gray-400">（空白，自由发挥）</span>}
+                  
+                  {/* 内容 */}
+                  <p style={{
+                    margin: 0,
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    color: isSelected ? '#166534' : '#4b5563'
+                  }}>
+                    {script.content || <span style={{ fontStyle: 'italic', color: '#9ca3af' }}>（空白，自由发挥）</span>}
                   </p>
+                  
+                  {/* 选中时的文字提示（卡片内） */}
+                  {isSelected && (
+                    <div style={{
+                      marginTop: '8px',
+                      padding: '4px 0',
+                      color: '#16a34a',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <Check style={{ width: 14, height: 14 }} />
+                      已选择，即将加载...
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -145,10 +249,29 @@ export const ScriptDrawer: React.FC<ScriptDrawerProps> = ({
         </div>
         
         {/* 底部提示 */}
-        <div className="p-4 border-t bg-gray-50 text-center text-xs text-gray-500">
+        <div style={{
+          padding: '16px',
+          borderTop: '1px solid #e5e7eb',
+          backgroundColor: '#f9fafb',
+          textAlign: 'center',
+          fontSize: '12px',
+          color: '#6b7280'
+        }}>
           点击话术即可选择并使用
         </div>
       </div>
+      
+      {/* 简单的 slideUp 动画 */}
+      <style>{`
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
