@@ -1,8 +1,8 @@
-import React, { useState, useRef, useCallback } from 'react';
-//import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Mic, Square, RotateCcw, Check, Volume2, AlertCircle, ChevronRight, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Mic, Square, RotateCcw, Check, Volume2, AlertCircle, ChevronRight, Loader2, MessageSquare } from 'lucide-react';
 import { useRecorder } from '../hooks/useRecorder';
 import { uploadAudioSegment } from '../utils/cos-upload';
+import { ScriptDrawer } from './ScriptDrawer';
 
 interface Segment {
   id: number;
@@ -35,52 +35,18 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
   const [isHoldStarting, setIsHoldStarting] = useState(false);
   const [showGuide, setShowGuide] = useState(true);
   
+  // 新增：话术库相关状态
+  const [showScriptDrawer, setShowScriptDrawer] = useState(false);
+  const [currentScript, setCurrentScript] = useState(''); // 当前段选中的话术
+  
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 音量可视化
-  /*
+  // 切换段时清空话术
   useEffect(() => {
-    if (!canvasRef.current || !state.isRecording) return;
+    setCurrentScript('');
+  }, [currentSegment]);
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // 绘制音量条
-      const barCount = 20;
-      const barWidth = canvas.width / barCount;
-      const maxHeight = canvas.height * 0.8;
-      
-      for (let i = 0; i < barCount; i++) {
-        // 添加一些随机波动效果
-        const randomFactor = 0.5 + Math.random() * 0.5;
-        const barHeight = state.volume * maxHeight * randomFactor;
-        const x = i * barWidth + barWidth * 0.2;
-        const y = (canvas.height - barHeight) / 2;
-        
-        // 渐变色
-        const gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
-        gradient.addColorStop(0, '#f97316');
-        gradient.addColorStop(1, '#ea580c');
-        
-        ctx.fillStyle = gradient;
-        ctx.roundRect(x, y, barWidth * 0.6, barHeight, 4);
-        ctx.fill();
-      }
-
-      if (state.isRecording) {
-        requestAnimationFrame(draw);
-      }
-    };
-
-    draw();
-  }, [state.isRecording, state.volume]);
-  */
-  
   // 自动停止：60秒倒计时结束
   useEffect(() => {
     if (state.isRecording && state.recordingTime >= SEGMENT_DURATION) {
@@ -89,31 +55,8 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
     }
   }, [state.isRecording, state.recordingTime]);
   
-
   // 改为简单的静态显示
   {/* 音量可视化 - 简化为静态，排除 Canvas 性能问题 */}
-<div className="h-16 w-full max-w-xs mb-6">
-  {state.isRecording ? (
-    <div className="flex items-center justify-center h-full gap-1">
-      {[...Array(8)].map((_, i) => (
-        <div 
-          key={i}
-          className="w-2 bg-orange-500 rounded-full animate-pulse"
-          style={{ 
-            height: `${Math.max(20, state.volume * 100)}%`,
-            animationDelay: `${i * 0.1}s`
-          }}
-        />
-      ))}
-    </div>
-  ) : (
-    <div className="flex items-center justify-center h-full text-gray-400">
-      <Volume2 className="w-6 h-6 mr-2" />
-      <span className="text-sm">等待录音...</span>
-    </div>
-  )}
-</div>
-  
 
   // 自动停止处理（区分于手动停止）
   const handleAutoStop = useCallback(async () => {
@@ -452,21 +395,42 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
         ))}
       </div>
 
-      {/* 当前段信息 */}
+      {/* 当前段信息 - 已添加话术库按钮 */}
       <div className="text-center mb-6">
-        <p className="text-lg font-medium text-gray-700">
+        <p className="text-lg font-medium text-gray-700 mb-2">
           第 {currentSegment + 1} 段
           {currentSegment === 0 && ' - "想对TA说的话"'}
           {currentSegment === 1 && ' - "你们的故事"'}
           {currentSegment === 2 && ' - "祝福与期待"'}
         </p>
-        <p className="text-sm text-gray-500 mt-1">
+        
+        {/* 新增：选话术按钮 */}
+        {canRecord && (
+          <button
+            onClick={() => setShowScriptDrawer(true)}
+            className="inline-flex items-center gap-1 px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium hover:bg-orange-200 transition-colors"
+          >
+            <MessageSquare className="w-4 h-4" />
+            {currentScript ? '换一句' : '不知道说什么？选个话术'}
+          </button>
+        )}
+        
+        <p className="text-sm text-gray-500 mt-2">
           {getStatusText(currentSeg)}
         </p>
       </div>
 
       {/* 录音按钮区域 */}
       <div className="flex flex-col items-center mb-8">
+        
+        {/* 新增：话术提示卡片（如果有选中） */}
+        {currentScript && (
+          <div className="w-full max-w-xs mb-4 p-4 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
+            <p className="text-xs text-orange-600 font-medium mb-1">参考文案（可照着读）：</p>
+            <p className="text-gray-800 text-base leading-relaxed">{currentScript}</p>
+          </div>
+        )}
+        
         {/* 音量可视化 */}
         <div className="h-16 w-full max-w-xs mb-6">
           {state.isRecording ? (
@@ -624,6 +588,14 @@ const Recorder: React.FC<RecorderProps> = ({ taskId, onComplete, onBack }) => {
           <li>• 录音会自动上传，请保持网络畅通</li>
         </ul>
       </div>
+
+      {/* 新增：话术抽屉 */}
+      <ScriptDrawer 
+        visible={showScriptDrawer}
+        onClose={() => setShowScriptDrawer(false)}
+        onSelect={setCurrentScript}
+        segmentIndex={currentSegment}
+      />
     </div>
   );
 };
