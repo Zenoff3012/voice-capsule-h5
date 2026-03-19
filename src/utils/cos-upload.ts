@@ -1,14 +1,7 @@
 /**
- * 腾讯云COS直传工具
- * 用于前端直接上传音频文件到COS，避免经过服务器中转
+ * 音频上传工具（后端代理版）
+ * 通过后端上传到 OSS，并自动写入 Notion
  */
-
-export interface COSCredentials {
-  TmpSecretId: string;
-  TmpSecretKey: string;
-  Token: string;
-  ExpiredTime: number;
-}
 
 export interface UploadResult {
   success: boolean;
@@ -17,96 +10,11 @@ export interface UploadResult {
   error?: string;
 }
 
-const COS_BUCKET = import.meta.env.VITE_COS_BUCKET || 'voice-capsule-125xxxxxx';
-const COS_REGION = import.meta.env.VITE_COS_REGION || 'ap-guangzhou';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://voice-capsule-api.vercel.app';
+// ⚠️ 关键修复：改成你的实际后端地址，删除错误的 fallback
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://voicecapsule-aofghbricj.cn-hangzhou.fcapp.run';
 
 /**
- * 从后端获取临时密钥
- */
-export async function getTempCredentials(): Promise<COSCredentials | null> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/upload/credentials`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('获取临时密钥失败');
-    }
-
-    const data = await response.json();
-    return data.credentials;
-  } catch (error) {
-    console.error('获取COS临时密钥失败:', error);
-    return null;
-  }
-}
-
-/**
- * 生成唯一的文件Key
- */
-export function generateFileKey(taskId: string, segmentIndex: number, extension: string = 'webm'): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `audio/${taskId}/segment_${segmentIndex}_${timestamp}_${random}.${extension}`;
-}
-
-/**
- * 使用临时密钥上传文件到COS
- * 注意：这里使用简单的POST表单上传方式，适合小文件
- */
-export async function uploadToCOS(
-  blob: Blob,
-  key: string,
-  credentials: COSCredentials
-): Promise<UploadResult> {
-  try {
-    // 构建COS上传URL
-    const uploadUrl = `https://${COS_BUCKET}.cos.${COS_REGION}.myqcloud.com/${key}`;
-
-    // 构建表单数据
-    const formData = new FormData();
-    formData.append('key', key);
-    formData.append('file', blob, 'audio.webm');
-
-    // 使用fetch上传
-    const response = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `q-sign-algorithm=sha1&q-ak=${credentials.TmpSecretId}&q-sign-time=${Math.floor(Date.now()/1000)};${credentials.ExpiredTime}&q-key-time=${Math.floor(Date.now()/1000)};${credentials.ExpiredTime}&q-header-list=host&q-url-param-list=&q-signature=${credentials.Token}`,
-        'Content-Type': 'audio/webm',
-        'x-cos-security-token': credentials.Token,
-      },
-      body: blob,
-    });
-
-    if (!response.ok) {
-      throw new Error(`上传失败: ${response.status} ${response.statusText}`);
-    }
-
-    // 构建访问URL
-    const fileUrl = `https://${COS_BUCKET}.cos.${COS_REGION}.myqcloud.com/${key}`;
-
-    return {
-      success: true,
-      url: fileUrl,
-      key: key,
-    };
-  } catch (error) {
-    console.error('COS上传失败:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : '上传失败',
-    };
-  }
-}
-
-/**
- * 简化版上传：直接通过后端代理上传
- * 适用于不想处理COS签名的场景
+ * 通过后端代理上传（推荐：后端自动写 Notion）
  */
 export async function uploadViaBackend(
   blob: Blob,
@@ -116,60 +24,60 @@ export async function uploadViaBackend(
   try {
     const formData = new FormData();
     formData.append('audio', blob, `segment_${segmentIndex}.webm`);
-    formData.append('task_id', taskId);        // 确认是下划线
+    formData.append('task_id', taskId);
     formData.append('segment_index', segmentIndex.toString());
 
-    // ✅ 加在这里：打印 FormData
-    console.log('=== 上传调试信息 ===');
+    console.log('=== 上传调试 ===');
+    console.log('API地址:', `${API_BASE_URL}/api/upload/audio`);
     console.log('taskId:', taskId);
     console.log('segmentIndex:', segmentIndex);
-    console.log('FormData entries:');
-    for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
-    console.log('===================');
 
     const response = await fetch(`${API_BASE_URL}/api/upload/audio`, {
       method: 'POST',
       body: formData,
+      // 重要：不要设置 Content-Type，让浏览器自动设置（包含 boundary）
     });
 
+    console.log('响应状态:', response.status);
+
+    // 关键修复：增强错误信息
     if (!response.ok) {
-      throw new Error('上传失败');
+      const errorText = await response.text();
+      console.error('上传失败详情:', response.status, errorText);
+      throw new Error(`上传失败(${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('上传成功:', data);
+    
     return {
       success: true,
       url: data.url,
       key: data.key,
     };
   } catch (error) {
-    console.error('上传失败:', error);
+    console.error('上传异常:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : '上传失败',
+      error: error instanceof Error ? error.message : '网络错误，请检查连接',
     };
   }
 }
 
 /**
- * 完整的上传流程
+ * 统一上传入口
  */
 export async function uploadAudioSegment(
   blob: Blob,
   taskId: string,
-  segmentIndex: number,
-  _onProgress?: (progress: number) => void
+  segmentIndex: number
 ): Promise<UploadResult> {
-  // 优先尝试通过后端上传（更简单可靠）
+  // 只走后端代理（OSS + Notion 写入）
   return uploadViaBackend(blob, taskId, segmentIndex);
 }
 
+// 导出兼容旧代码
 export default {
-  getTempCredentials,
-  generateFileKey,
-  uploadToCOS,
-  uploadViaBackend,
   uploadAudioSegment,
+  uploadViaBackend,
 };
