@@ -3,15 +3,25 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'], // 移除了 html，避免缓存 play.html
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/play\.html/, /^\/play\//], // 关键：排除 play 相关路径
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/your-api-domain\.com\//,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+            },
+          },
+        ],
       },
       manifest: {
         name: '亲声胶囊',
@@ -44,7 +54,6 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    https: false, // 本地开发不需要HTTPS，但微信浏览器需要
     cors: true,
   },
   build: {

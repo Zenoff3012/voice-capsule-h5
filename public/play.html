@@ -399,12 +399,19 @@
             ? 'http://localhost:8000'  // 本地开发
             : 'https://www.auracast.com.cn';  // 生产环境（替换为你的实际域名）
         
-        // 解析 URL 参数获取 taskId
-        const urlParams = new URLSearchParams(window.location.search);
-        const taskId = urlParams.get('id');
         
-        let refreshInterval = null;
-        let audioPlayer = null;
+        // 修改为：同时支持 /play/xxx 和 /play?id=xxx
+        function getTaskId() {
+            // 先尝试 Query 参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryId = urlParams.get('id');
+            if (queryId) return queryId;
+            
+            // 再尝试路径参数 /play/xxx
+            const pathMatch = window.location.pathname.match(/\/play\/([^\/]+)/);
+            if (pathMatch) return pathMatch[1];
+            return null;
+        }
         
         // 初始化
         async function init() {
