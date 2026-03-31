@@ -436,7 +436,7 @@
             try {
                 showLoading();
                 
-                const response = await fetch(`${API_BASE}/api/capsule/${taskId}`);
+                const response = await fetch(`${API_BASE}/api/play/${taskId}`);
                 const data = await response.json();
                 
                 if (!response.ok) {
