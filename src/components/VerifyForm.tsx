@@ -155,31 +155,7 @@ const VerifyForm: React.FC<VerifyFormProps> = ({ onVerified }) => {
 
   return (
     <div className="min-h-screen bg-[#F5F0E6] py-8 px-4 relative overflow-hidden" style={{ fontFamily: '"Source Han Serif SC", "PingFang SC", "SimSun", serif' }}>
-      {/* 背景水印 - 修复：改为单层淡色纹理，避免文字重复 */}
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none z-0 overflow-hidden">
-        <div 
-          className="absolute text-[#8B5A2B] text-8xl font-bold rotate-[-30deg] select-none"
-          style={{ 
-            top: '10%',
-            left: '-5%',
-            fontFamily: '"KaiTi", "STKaiti", "楷体", serif',
-            transform: 'rotate(-30deg) scale(1.2)'
-          }}
-        >
-          时光
-        </div>
-        <div 
-          className="absolute text-[#8B5A2B] text-8xl font-bold rotate-[25deg] select-none"
-          style={{ 
-            bottom: '15%',
-            right: '-10%',
-            fontFamily: '"KaiTi", "STKaiti", "楷体", serif',
-            transform: 'rotate(25deg) scale(1.2)'
-          }}
-        >
-          记忆
-        </div>
-      </div>
+      
 
       {/* 邮票外框容器 */}
       <div className="relative max-w-md mx-auto">
@@ -357,17 +333,17 @@ const VerifyForm: React.FC<VerifyFormProps> = ({ onVerified }) => {
               </p>
             </div>
 
-            {/* 底部装饰 */}
-            <div className="mt-6 text-center">
-              <p className="text-xs text-[#8B5A2B] opacity-50 tracking-widest" style={{ fontFamily: '"KaiTi", "STKaiti", "楷体", serif' }}>
-                亲声时光贴 · 用声音传递心意
-              </p>
-              <div className="flex items-center justify-center gap-1 mt-2 opacity-30">
-                <div className="w-2 h-2 rounded-full bg-[#B85450]" />
-                <div className="w-2 h-2 rounded-full bg-[#D4A574]" />
-                <div className="w-2 h-2 rounded-full bg-[#8B5A2B]" />
-              </div>
-            </div>
+            //{/* 底部装饰 */}
+            //<div className="mt-6 text-center">
+              //<p className="text-xs text-[#8B5A2B] opacity-50 tracking-widest" style={{ fontFamily: '"KaiTi", "STKaiti", "楷体", serif' }}>
+                //亲声时光贴 · 用声音传递心意
+              //</p>
+              //<div className="flex items-center justify-center gap-1 mt-2 opacity-30">
+                //<div className="w-2 h-2 rounded-full bg-[#B85450]" />
+                //<div className="w-2 h-2 rounded-full bg-[#D4A574]" />
+                //<div className="w-2 h-2 rounded-full bg-[#8B5A2B]" />
+              //</div>
+            //</div>
           </div>
         </div>
       </div>
