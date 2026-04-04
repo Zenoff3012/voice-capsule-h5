@@ -512,59 +512,64 @@ const Recorder: React.FC<RecorderProps> = ({
             </div>
           )}
         </div>
-
+        
         <div className="flex flex-col items-center gap-4">
-          {canRecord ? (
-            <>
-              {/* 修改6: 按住录音按钮 - 添加视觉反馈 */}
-              <button
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onMouseDown={handleTouchStart}
-                onMouseUp={handleTouchEnd}
-                onMouseLeave={handleTouchEnd}
-                className={`w-20 h-20 rounded-full flex items-center justify-center transition-all relative ${
-                  isHoldStarting
-                    ? 'bg-orange-300 scale-95'
-                    : state.isRecording
-                    ? 'bg-red-500 scale-105 shadow-lg shadow-red-200'
-                    : 'bg-orange-500 hover:bg-orange-600 shadow-lg hover:shadow-xl'
-                }`}
-                disabled={state.isRecording && !isHoldStarting}
-              >
-                {state.isRecording ? (
-                  <Square className="w-8 h-8 text-white fill-white" />
-                ) : (
-                  <Mic className="w-8 h-8 text-white" />
-                )}
-                
-                {/* 录音中的脉冲动画 */}
-                {state.isRecording && (
-                  <span className="absolute w-full h-full rounded-full bg-red-400 animate-ping opacity-30"></span>
-                )}
-              </button>
-              
-              {/* 修改7: 中断按钮 - 更明显的红色停止按钮 */}
-              {state.isRecording && (
-                <button
-                  onClick={handleManualStop}
-                  className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-red-500 text-red-600 rounded-full font-medium hover:bg-red-50 transition-colors shadow-sm active:scale-95"
-                >
-                  <Square className="w-4 h-4 fill-red-600" />
-                  <span>结束录音</span>
-                  <span className="text-xs text-red-400 ml-1">
-                    ({state.recordingTime}s/{maxDuration}s)
-                  </span>
-                </button>
+          {/* 录音按钮 - 只在可以录音时显示（未开始或错误状态） */}
+          {canRecord && (
+            <button
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleTouchStart}
+              onMouseUp={handleTouchEnd}
+              onMouseLeave={handleTouchEnd}
+              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all relative ${
+                isHoldStarting
+                  ? 'bg-orange-300 scale-95'
+                  : state.isRecording
+                  ? 'bg-red-500 scale-105 shadow-lg shadow-red-200'
+                  : 'bg-orange-500 hover:bg-orange-600 shadow-lg hover:shadow-xl'
+              }`}
+              disabled={state.isRecording && !isHoldStarting}
+            >
+              {state.isRecording ? (
+                <Square className="w-8 h-8 text-white fill-white" />
+              ) : (
+                <Mic className="w-8 h-8 text-white" />
               )}
               
-              {/* 提示文字 */}
-              <p className="text-sm text-gray-500">
-                {isHoldStarting && '请继续按住...'}
-                {!isHoldStarting && !state.isRecording && '按住录音，松手或点击结束'}
-              </p>
-            </>
+              {state.isRecording && (
+                <span className="absolute w-full h-full rounded-full bg-red-400 animate-ping opacity-30"></span>
+              )}
+            </button>
+          )}
+          
+          {/* 中断按钮 - 关键修复：移出 canRecord 条件，只要录音中就显示 */}
+          {state.isRecording && (
+            <button
+              onClick={handleManualStop}
+              className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-red-500 text-red-600 rounded-full font-medium hover:bg-red-50 transition-colors shadow-sm active:scale-95 z-10"
+            >
+              <Square className="w-4 h-4 fill-red-600" />
+              <span>结束录音</span>
+              <span className="text-xs text-red-400 ml-1">
+                ({state.recordingTime}s/{maxDuration}s)
+              </span>
+            </button>
+          )}
+
+          {/* 提示文字 - 录音中显示提示，未录音显示按住提示 */}
+          {state.isRecording ? (
+            <p className="text-sm text-gray-500">点击上方按钮或松手结束录音</p>
           ) : (
+            canRecord && (
+              <p className="text-sm text-gray-500">
+                {isHoldStarting ? '请继续按住...' : '按住录音，松手或点击结束'}
+              </p>
+            )
+          )}
+          
+          {/* 下一段/重试按钮 - 只在非录音且非可录音状态显示 */}
+          {!canRecord && !state.isRecording && (
             <div className="flex gap-4">
               {currentSeg.status === 'uploaded' && currentSegment < 2 && (
                 <button
