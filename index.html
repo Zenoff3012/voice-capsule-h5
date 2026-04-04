@@ -7,20 +7,27 @@
     
     <!-- PWA配置 -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#f97316" />
+    <!-- 修改: 主题色改为复古红 -->
+    <meta name="theme-color" content="#B85450" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="亲声胶囊" />
+    <!-- 修改: PWA标题 -->
+    <meta name="apple-mobile-web-app-title" content="亲声时光贴" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
     
     <!-- SEO -->
-    <title>亲声胶囊 - 用声音传递心意</title>
-    <meta name="description" content="录制专属声音礼物，用声音传递你的心意。春节特别版，为TA制作一份独特的声音胶囊。" />
-    <meta name="keywords" content="声音礼物,录音,春节礼物,声音胶囊,亲声胶囊" />
+    <!-- 修改: 页面标题 -->
+    <title>亲声时光贴 - 把声音贴进时光里</title>
+    <!-- 修改: 描述文案 -->
+    <meta name="description" content="录制专属声音时光贴，把声音贴进时光里。为TA制作一份独特的声音明信片，用声音传递跨越时空的心意。" />
+    <!-- 修改: 关键词 -->
+    <meta name="keywords" content="声音礼物,录音,时光贴,声音明信片,亲声时光贴,怀旧,复古" />
     
     <!-- 微信分享 -->
-    <meta property="og:title" content="亲声胶囊 - 用声音传递心意" />
-    <meta property="og:description" content="有人为你制作了一份声音礼物，快来听听吧！" />
+    <!-- 修改: Open Graph 标题 -->
+    <meta property="og:title" content="亲声时光贴 - 把声音贴进时光里" />
+    <!-- 修改: Open Graph 描述 -->
+    <meta property="og:description" content="有人为你制作了一份声音时光贴，快来听听这段穿越时空的声音留言吧！" />
     <meta property="og:image" content="/icons/icon-512x512.png" />
     <meta property="og:type" content="website" />
     
@@ -30,11 +37,12 @@
     <meta http-equiv="Expires" content="0" />
     
     <style>
-      /* 加载动画 */
+      /* 修改: 加载动画样式改为复古风格 */
       .loading-screen {
         position: fixed;
         inset: 0;
-        background: linear-gradient(135deg, #fff7ed 0%, #fff 100%);
+        /* 旧纸张背景色 */
+        background: linear-gradient(135deg, #F5F0E6 0%, #FDF6E3 100%);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -46,34 +54,44 @@
         opacity: 0;
         pointer-events: none;
       }
+      /* 修改: Logo样式改为复古收音机风格 */
       .loading-logo {
         width: 80px;
         height: 80px;
-        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        /* 复古红渐变 */
+        background: linear-gradient(135deg, #D4A574 0%, #B85450 100%);
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
         animation: loading-pulse 1.5s ease-in-out infinite;
+        /* 添加边框营造立体感 */
+        border: 3px solid #8B5A2B;
+        box-shadow: 0 4px 0 #5C4033, 0 8px 20px rgba(0,0,0,0.2);
       }
+      /* 修改: 文字改为"时" */
       .loading-logo span {
         color: white;
         font-size: 32px;
         font-weight: bold;
+        /* 系统衬线字体 */
+        font-family: "Source Han Serif SC", "PingFang SC", serif;
       }
       .loading-text {
         margin-top: 20px;
-        color: #666;
+        /* 复古深棕色 */
+        color: #5C4033;
         font-size: 14px;
+        font-family: "Source Han Serif SC", "PingFang SC", serif;
       }
       @keyframes loading-pulse {
         0%, 100% {
           transform: scale(1);
-          box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
+          box-shadow: 0 4px 0 #5C4033, 0 4px 20px rgba(184, 84, 80, 0.3);
         }
         50% {
           transform: scale(1.05);
-          box-shadow: 0 8px 30px rgba(249, 115, 22, 0.5);
+          box-shadow: 0 4px 0 #5C4033, 0 8px 30px rgba(184, 84, 80, 0.5);
         }
       }
     </style>
@@ -82,9 +100,10 @@
     <!-- 加载画面 -->
     <div class="loading-screen" id="loading-screen">
       <div class="loading-logo">
-        <span>亲</span>
+        <!-- 修改: 从"亲"改为"时" -->
+        <span>时</span>
       </div>
-      <p class="loading-text">正在加载...</p>
+      <p class="loading-text">正在加载时光贴...</p>
     </div>
     
     <div id="root"></div>
@@ -111,8 +130,5 @@
         console.warn('微信浏览器需要使用HTTPS才能录音');
       }
     </script>
-    
-    <!-- 腾讯云COS SDK（可选，如果需要更高级的功能） -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/cos-js-sdk-v5/dist/cos-js-sdk-v5.min.js"></script> -->
   </body>
 </html>
