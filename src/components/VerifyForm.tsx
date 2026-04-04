@@ -333,17 +333,6 @@ const VerifyForm: React.FC<VerifyFormProps> = ({ onVerified }) => {
               </p>
             </div>
 
-            //{/* 底部装饰 */}
-            //<div className="mt-6 text-center">
-              //<p className="text-xs text-[#8B5A2B] opacity-50 tracking-widest" style={{ fontFamily: '"KaiTi", "STKaiti", "楷体", serif' }}>
-                //亲声时光贴 · 用声音传递心意
-              //</p>
-              //<div className="flex items-center justify-center gap-1 mt-2 opacity-30">
-                //<div className="w-2 h-2 rounded-full bg-[#B85450]" />
-                //<div className="w-2 h-2 rounded-full bg-[#D4A574]" />
-                //<div className="w-2 h-2 rounded-full bg-[#8B5A2B]" />
-              //</div>
-            //</div>
           </div>
         </div>
       </div>
