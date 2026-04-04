@@ -53,6 +53,8 @@
       .loading-screen.hidden {
         opacity: 0;
         pointer-events: none;
+        display: none !important; /* 添加：确保完全移除布局空间 */
+        visibility: hidden; /* 添加：双重保险 */
       }
       /* 修改: Logo样式改为复古收音机风格 */
       .loading-logo {
