@@ -104,7 +104,7 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '亲声胶囊 - 一份特别的声音礼物',
+          title: '亲声时光贴 - 一份特别的声音礼物',
           text: '有人为你制作了一份声音礼物，快来听听吧！',
           url: shareUrl,
         });
@@ -132,7 +132,7 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `声音胶囊_第${currentSegment + 1}段.mp3`;
+      a.download = `亲声时光贴_第${currentSegment + 1}段.mp3`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -149,7 +149,7 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
         <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
           <Gift className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800">声音胶囊</h2>
+        <h2 className="text-2xl font-bold text-gray-800">亲声时光贴</h2>
         <p className="text-gray-500 mt-1">一份特别的声音礼物</p>
       </div>
 
@@ -252,7 +252,7 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
       {/* 二维码 */}
       {showQR && (
         <div className="bg-white rounded-2xl p-6 shadow-lg mb-6 text-center">
-          <p className="text-sm text-gray-600 mb-4">扫码收听声音胶囊</p>
+          <p className="text-sm text-gray-600 mb-4">扫码收听亲声时光贴</p>
           <div className="inline-block p-4 bg-white rounded-xl shadow-inner">
             <QRCodeSVG
               value={shareUrl}
@@ -277,7 +277,7 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
         className="w-full py-3 text-gray-500 flex items-center justify-center gap-2 hover:text-orange-500 transition-colors"
       >
         <RefreshCw className="w-4 h-4" />
-        制作新的声音胶囊
+        制作新的亲声时光贴
       </button>
 
       {/* 提示信息 */}

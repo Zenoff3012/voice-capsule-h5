@@ -282,7 +282,7 @@ const Recorder: React.FC<RecorderProps> = ({
       fetch(`/api/complete/${taskId}`, { method: 'POST' }).catch(console.error);
       onComplete(segments);
     } else {
-      alert('请等待所有音频上传完成');
+      alert('请等待所有留言上传完成');
     }
   }, [segments, taskId, onComplete]);
 
@@ -373,7 +373,7 @@ const Recorder: React.FC<RecorderProps> = ({
             <p>⏱️ 制作时间：约 30 分钟</p>
             <p>👨‍💼 工作人员将：</p>
             <ul className="text-xs text-gray-500 space-y-1 ml-4">
-              <li>• 检查音频质量</li>
+              <li>• 检查留言质量</li>
               <li>• 合并三段录音</li>
               <li>• 生成专属播放链接</li>
             </ul>
@@ -385,13 +385,13 @@ const Recorder: React.FC<RecorderProps> = ({
               onClick={() => window.location.reload()}
               className="text-sm text-gray-500 underline"
             >
-              录制另一个胶囊
+              录制另一个时光贴
             </button>
           </div>
         </div>
         
         <div className="mt-8 text-center text-xs text-gray-400">
-          <p>亲声胶囊 · 用声音传递心意</p>
+          <p>亲声时光贴 · 用声音传递心意</p>
         </div>
       </div>
     );
@@ -401,7 +401,7 @@ const Recorder: React.FC<RecorderProps> = ({
     <div className="max-w-md mx-auto px-4 py-6">
       {/* 标题 */}
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">录制声音胶囊</h2>
+        <h2 className="text-2xl font-bold text-gray-800">录制声音时光贴</h2>
         <p className="text-gray-500 mt-1">共3段，每段最多{maxDuration}秒</p>
       </div>
 
@@ -650,10 +650,10 @@ const Recorder: React.FC<RecorderProps> = ({
       <div className="mt-8 p-4 bg-blue-50 rounded-xl">
         <p className="text-sm text-blue-700 font-medium mb-2">录音小贴士：</p>
         <ul className="text-sm text-blue-600 space-y-1">
-          <li>• 请在安静的环境下录音</li>
-          <li>• 距离手机麦克风10-15厘米</li>
-          <li>• 每段限{maxDuration}秒，可随时中断</li>
-          <li>• 录音会自动上传，请保持网络畅通</li>
+          <li>请在安静的环境下录音</li>
+          <li>距离手机麦克风10-15厘米</li>
+          <li>每段限{maxDuration}秒，可随时中断</li>
+          <li>录音会自动上传，请保持网络畅通</li>
         </ul>
       </div>
 
