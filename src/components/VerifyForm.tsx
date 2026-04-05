@@ -185,10 +185,10 @@ const VerifyForm: React.FC<VerifyFormProps> = ({ onVerified }) => {
                   }}>
                 亲声时光贴
               </h1>
-              <p className="text-[#8B5A2B] text-lg italic tracking-wide" style={{ fontFamily: '"KaiTi", "STKaiti", "楷体", serif' }}>
+              <h3 className="font-bold text-[#3D2C1F] mb-3 flex items-center gap-2 text-sm" style={{ fontFamily: '"Source Han Serif SC", "PingFang SC", serif' }}>
                 <Mail className="w-4 h-4 text-[#8B5A2B]" />
                 把声音贴进时光里
-              </p>
+              </h3>
               
               {/* 装饰线 */}
               <div className="flex items-center justify-center gap-2 mt-4 opacity-50">
