@@ -37,11 +37,10 @@
     <meta http-equiv="Expires" content="0" />
     
     <style>
-      /* 修改: 加载动画样式改为复古风格 */
+      /* 加载动画 - 复古风格 */
       .loading-screen {
         position: fixed;
         inset: 0;
-        /* 旧纸张背景色 */
         background: linear-gradient(135deg, #F5F0E6 0%, #FDF6E3 100%);
         display: flex;
         flex-direction: column;
@@ -50,42 +49,42 @@
         z-index: 9999;
         transition: opacity 0.3s ease;
       }
+      
+      /* 关键修复：确保完全隐藏 */
       .loading-screen.hidden {
         opacity: 0;
         pointer-events: none;
-        display: none !important; /* 添加：确保完全移除布局空间 */
-        visibility: hidden; /* 添加：双重保险 */
+        display: none !important;  /* 彻底移除布局 */
+        visibility: hidden;        /* 双重保险 */
       }
-      /* 修改: Logo样式改为复古收音机风格 */
+      
       .loading-logo {
         width: 80px;
         height: 80px;
-        /* 复古红渐变 */
         background: linear-gradient(135deg, #D4A574 0%, #B85450 100%);
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
         animation: loading-pulse 1.5s ease-in-out infinite;
-        /* 添加边框营造立体感 */
         border: 3px solid #8B5A2B;
         box-shadow: 0 4px 0 #5C4033, 0 8px 20px rgba(0,0,0,0.2);
       }
-      /* 修改: 文字改为"时" */
+      
       .loading-logo span {
         color: white;
         font-size: 32px;
         font-weight: bold;
-        /* 系统衬线字体 */
         font-family: "Source Han Serif SC", "PingFang SC", serif;
       }
+      
       .loading-text {
         margin-top: 20px;
-        /* 复古深棕色 */
         color: #5C4033;
         font-size: 14px;
         font-family: "Source Han Serif SC", "PingFang SC", serif;
       }
+      
       @keyframes loading-pulse {
         0%, 100% {
           transform: scale(1);
