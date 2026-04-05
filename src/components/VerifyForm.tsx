@@ -208,15 +208,15 @@ const VerifyForm: React.FC<VerifyFormProps> = ({ onVerified }) => {
               <ol className="text-sm text-[#5C4033] space-y-3" style={{ fontFamily: '"Source Han Serif SC", "PingFang SC", "SimSun", serif' }}>
                 <li className="flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-[#B85450] text-white flex items-center justify-center text-xs flex-shrink-0 shadow-sm border-2 border-[#FDF6E3] font-bold"></span>
-                  <span>输入订单号验证<br/><span className="text-xs text-[#8B5A2B] opacity-70">（微店购买后获得）</span></span>
+                  <span>输入订单号验证<span className="text-xs text-[#8B5A2B] opacity-70">（微店购买后获得）</span></span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-[#B85450] text-white flex items-center justify-center text-xs flex-shrink-0 shadow-sm border-2 border-[#FDF6E3] font-bold"></span>
-                  <span>录制3段时光留言<br/><span className="text-xs text-[#8B5A2B] opacity-70">（每段限30秒）</span></span>
+                  <span>录制3段时光留言<span className="text-xs text-[#8B5A2B] opacity-70">（每段限30秒）</span></span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-[#B85450] text-white flex items-center justify-center text-xs flex-shrink-0 shadow-sm border-2 border-[#FDF6E3] font-bold"></span>
-                  <span>生成专属播放页<br/><span className="text-xs text-[#8B5A2B] opacity-70">（寄给远方的TA）</span></span>
+                  <span>生成专属播放页<span className="text-xs text-[#8B5A2B] opacity-70">（寄给远方的TA）</span></span>
                 </li>
               </ol>
             </div>
