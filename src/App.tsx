@@ -76,22 +76,7 @@ function App() {
     <div className="min-h-screen bg-[#F5F0E6]" style={{ fontFamily: '"Source Han Serif SC", "PingFang SC", "SimSun", serif' }}>
       {/* 顶部导航 - 复古风格 */}
       <header className="bg-[#FDF6E3] shadow-[0_2px_8px_rgba(0,0,0,0.06)] sticky top-0 z-10 border-b border-[#E8E0D0]">
-        <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* 复古收音机图标（简化版） */}
-            <div className="w-9 h-9 bg-gradient-to-br from-[#D4A574] to-[#B85450] rounded-lg flex items-center justify-center shadow-md border-2 border-[#8B5A2B]">
-              <span className="text-white font-bold text-sm" style={{ fontFamily: '"Source Han Serif SC", serif' }}>时</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-[#3D2C1F] text-lg tracking-wide" style={{ fontFamily: '"Source Han Serif SC", "PingFang SC", serif' }}>
-                亲声时光贴
-              </span>
-              <span className="text-[10px] text-[#8B5A2B] opacity-70" style={{ fontFamily: '"KaiTi", "STKaiti", serif' }}>
-                把声音贴进时光里
-              </span>
-            </div>
-          </div>
-          
+        <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-center">
           {/* 进度指示器 - 复古配色 */}
           <div className="flex items-center gap-1.5">
             <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
