@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Heart, Share2, Gift, Download, RefreshCw, QrCode } from 'lucide-react';
+import { Play, Pause, Heart, Share2, Gift, Download, RefreshCw, QrCode, Image as ImageIcon, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import html2canvas from 'html2canvas';
 
 interface Segment {
   id: number;
@@ -13,6 +14,46 @@ interface PlayerProps {
   onRestart: () => void;
 }
 
+// 模板配置（对应即梦生成的4张图）
+const TEMPLATES = [
+  { 
+    id: 'ink', 
+    name: '水墨', 
+    bg: '/templates/bg1.png', 
+    titleY: 350,      // 从150下移，避免顶头
+    qrY: 850,         // 从1100上移，靠近中间
+    hintY: 1300,      // 相应上移
+    textColor: '#3D2C1F' 
+  },
+  { 
+    id: 'pastel', 
+    name: '蜡笔', 
+    bg: '/templates/bg2.png', 
+    titleY: 300,      // 圆形中心区域上方
+    qrY: 700,         // 靠近圆形中心
+    hintY: 1150,      // 下方留白
+    textColor: '#8B5A2B' 
+  },
+  { 
+    id: 'flat', 
+    name: '拍立得', 
+    bg: '/templates/bg3.png', 
+    titleY: 400,      // 拍立得相框上方
+    qrY: 650,         // 相框内居中偏上（原750太靠下）
+    hintY: 1050,      // 相框下方
+    textColor: '#4A4A4A' 
+  },
+  { 
+    id: 'watercolor', 
+    name: '水彩', 
+    bg: '/templates/bg4.png', 
+    titleY: 320,      // 从200下移，避开顶部花纹
+    qrY: 780,         // 从1000上移，放在视觉中心
+    hintY: 1200,      // 相应上移
+    textColor: '#5D4E37' 
+  },
+];
+
 const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
   const [currentSegment, setCurrentSegment] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -21,9 +62,19 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
   const [showQR, setShowQR] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   
+  // 海报相关状态
+  const [showPosterModal, setShowPosterModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(0); // 默认第一个模板
+  const [posterImage, setPosterImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
   const audioRef = useRef<HTMLAudioElement>(null);
+  const posterRef = useRef<HTMLDivElement>(null);
+  
   const currentUrl = segments[currentSegment]?.uploadUrl;
+  // 根据实际路由调整：auracast.com.cn/play/486cc9f7
   const shareUrl = `${window.location.origin}/play/${taskId}`;
+  const currentTemplate = TEMPLATES[selectedTemplate];
 
   // 播放控制
   const togglePlay = () => {
@@ -57,7 +108,6 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
 
     const handleEnded = () => {
       setIsPlaying(false);
-      // 自动播放下一段
       if (currentSegment < segments.length - 1) {
         setTimeout(() => {
           setCurrentSegment(prev => prev + 1);
@@ -112,7 +162,6 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
         console.log('分享取消');
       }
     } else {
-      // 复制链接到剪贴板
       try {
         await navigator.clipboard.writeText(shareUrl);
         alert('链接已复制到剪贴板');
@@ -139,6 +188,47 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       alert('下载失败，请重试');
+    }
+  };
+
+  // 生成海报
+  const handleGeneratePoster = async () => {
+    setIsGenerating(true);
+    setShowPosterModal(true);
+    
+    // 等待DOM渲染完成
+    setTimeout(async () => {
+      if (posterRef.current) {
+        try {
+          const canvas = await html2canvas(posterRef.current, {
+            width: 1080,
+            height: 1920,
+            scale: 1,
+            useCORS: true, // 允许跨域图片（背景图需要同源或CORS）
+            backgroundColor: null,
+          });
+          
+          const image = canvas.toDataURL('image/png', 1.0);
+          setPosterImage(image);
+        } catch (err) {
+          console.error('生成海报失败:', err);
+          alert('生成海报失败，请重试');
+        } finally {
+          setIsGenerating(false);
+        }
+      }
+    }, 100);
+  };
+
+  // 保存海报到本地
+  const handleSavePoster = () => {
+    if (posterImage) {
+      const a = document.createElement('a');
+      a.href = posterImage;
+      a.download = `亲声时光贴_${taskId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
@@ -231,21 +321,28 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
         </div>
       </div>
 
-      {/* 操作按钮 */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      {/* 操作按钮 - 改为3列布局，增加生成海报 */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <button
           onClick={handleShare}
-          className="py-3 bg-white border border-gray-200 rounded-xl font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+          className="py-3 bg-white border border-gray-200 rounded-xl font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors text-sm"
         >
-          <Share2 className="w-5 h-5" />
+          <Share2 className="w-4 h-4" />
           分享
         </button>
         <button
           onClick={() => setShowQR(!showQR)}
-          className="py-3 bg-white border border-gray-200 rounded-xl font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+          className="py-3 bg-white border border-gray-200 rounded-xl font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors text-sm"
         >
-          <QrCode className="w-5 h-5" />
-          {showQR ? '隐藏' : '二维码'}
+          <QrCode className="w-4 h-4" />
+          二维码
+        </button>
+        <button
+          onClick={handleGeneratePoster}
+          className="py-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl font-medium text-white flex items-center justify-center gap-2 hover:shadow-lg transition-all text-sm"
+        >
+          <ImageIcon className="w-4 h-4" />
+          生成海报
         </button>
       </div>
 
@@ -259,12 +356,6 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
               size={200}
               level="M"
               includeMargin={true}
-              imageSettings={{
-                src: '/logo.png',
-                height: 40,
-                width: 40,
-                excavate: true,
-              }}
             />
           </div>
           <p className="text-xs text-gray-400 mt-4 break-all">{shareUrl}</p>
@@ -285,6 +376,197 @@ const Player: React.FC<PlayerProps> = ({ taskId, segments, onRestart }) => {
         <p className="text-sm text-orange-700 text-center">
           这份声音礼物已保存，随时可以通过链接收听
         </p>
+      </div>
+
+      {/* 海报预览 Modal */}
+      {showPosterModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+            
+            <div className="p-4 border-b flex justify-between items-center shrink-0">
+              <h3 className="font-bold text-gray-800">分享海报</h3>
+              <button 
+                onClick={() => setShowPosterModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto">
+              {/* 模板选择 */}
+              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                {TEMPLATES.map((tpl, idx) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => {
+                      setSelectedTemplate(idx);
+                      setPosterImage(null);
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${
+                      selectedTemplate === idx 
+                        ? 'bg-orange-500 text-white' 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {tpl.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* 预览区域 - 使用固定比例容器 */}
+              <div className="flex justify-center mb-4">
+                <div 
+                  className="relative bg-gray-100 rounded-lg overflow-hidden"
+                  style={{ 
+                    width: '225px',      // 固定宽度
+                    height: '400px',     // 固定高度 9:16
+                    maxWidth: '100%',
+                  }}
+                >
+                  {isGenerating ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                      <span className="text-xs text-gray-500">生成中...</span>
+                    </div>
+                  ) : posterImage ? (
+                    <div className="w-full h-full flex items-center justify-center overflow-hidden">
+                      <img 
+                        src={posterImage} 
+                        alt="海报预览" 
+                        className="max-w-full max-h-full object-contain"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto',
+                          display: 'block'
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm text-center px-4">
+                      <div>
+                        点击"生成预览"查看效果<br/>
+                        <span className="text-xs opacity-70">首次生成可能需要几秒</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 操作按钮 */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleGeneratePoster}
+                  disabled={isGenerating}
+                  className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  {posterImage ? '重新生成' : '生成预览'}
+                </button>
+                {posterImage && (
+                  <button
+                    onClick={handleSavePoster}
+                    className="flex-1 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                  >
+                    保存图片
+                  </button>
+                )}
+              </div>
+              
+              <p className="text-xs text-gray-400 text-center mt-3">
+                长按图片或点击保存到相册
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 隐藏的海报生成区域（用于 html2canvas 捕获） */}
+      <div 
+        ref={posterRef}
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: 0,
+          width: '1080px',
+          height: '1920px',
+          backgroundImage: `url(${currentTemplate.bg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* 顶部标题 */}
+        <div
+          style={{
+            position: 'absolute',
+            top: `${currentTemplate.titleY}px`,
+            left: '0',
+            right: '0',
+            textAlign: 'center',
+            fontSize: '72px',
+            fontWeight: 'bold',
+            color: currentTemplate.textColor,
+            fontFamily: '"Source Han Serif SC", "PingFang SC", serif',
+            textShadow: '2px 2px 4px rgba(255,255,255,0.5)',
+          }}
+        >
+          亲声时光贴
+        </div>
+
+        {/* 二维码区域 */}
+        <div
+          style={{
+            position: 'absolute',
+            top: `${currentTemplate.qrY}px`,
+            left: '340px',
+            width: '400px',
+            height: '400px',
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '20px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          }}
+        >
+          <QRCodeSVG
+            value={shareUrl}
+            size={360}
+            level="H"
+            includeMargin={false}
+          />
+        </div>
+
+        {/* 底部提示文字 */}
+        <div
+          style={{
+            position: 'absolute',
+            top: `${currentTemplate.hintY}px`,
+            left: '0',
+            right: '0',
+            textAlign: 'center',
+            fontSize: '40px',
+            color: currentTemplate.textColor,
+            fontFamily: '"KaiTi", "STKaiti", serif',
+            letterSpacing: '4px',
+          }}
+        >
+          扫码收听TA的语音留言
+        </div>
+        
+        {/* 装饰性时间戳 */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '60px',
+            right: '60px',
+            fontSize: '24px',
+            color: currentTemplate.textColor,
+            opacity: 0.6,
+            fontFamily: '"Source Han Serif SC", serif',
+          }}
+        >
+          {new Date().toLocaleDateString('zh-CN')}
+        </div>
       </div>
     </div>
   );
